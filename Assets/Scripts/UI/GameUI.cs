@@ -597,7 +597,7 @@ namespace PhoAmThucViet.UI
             {
                 bool canShow = _game.CanShowUnlock(data);
                 p.level.text = "Chưa mở";
-                p.info.text = canShow ? $"Mỗi món bán được {_game.DishPrice(data, 1)}" : "Hãy mở quầy phía trước trước";
+                p.info.text = canShow ? $"Mỗi món bán được {_game.DishPrice(data, 1)}" : "Quầy không thuộc quán này";
                 var cost = _game.UnlockPrice(data);
                 p.unlock.Set(canShow ? $"Mở quầy · {cost}" : "Đang khóa", canShow && state.money >= cost);
             }

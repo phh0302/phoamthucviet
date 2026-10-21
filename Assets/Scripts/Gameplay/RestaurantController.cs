@@ -780,12 +780,11 @@ namespace PhoAmThucViet.Gameplay
 
         public bool IsUnlocked(StationData data) => (State.GetStation(data.id)?.level ?? 0) > 0;
 
-        /// <summary>Quầy chỉ mở được khi quầy trước đã mở.</summary>
-        public bool CanShowUnlock(StationData data)
-        {
-            int i = Venue.stations.IndexOf(data);
-            return i <= 0 || IsUnlocked(Venue.stations[i - 1]);
-        }
+        /// <summary>
+        /// Mọi quầy của quán đều mở được tự do (không cần mở quầy phía trước trước);
+        /// mỗi quầy vẫn có giá mở riêng (quầy càng về sau càng đắt).
+        /// </summary>
+        public bool CanShowUnlock(StationData data) => data != null && Venue.stations.Contains(data);
 
         public BigNum UnlockPrice(StationData data) => EconomyService.UnlockCost(data, Venue, Bonuses);
 
