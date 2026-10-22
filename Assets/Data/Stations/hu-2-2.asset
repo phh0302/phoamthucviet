@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c70119442da83342ae04a8de6fb8e7d, type: 3}
+  m_Name: hu-2-2
+  m_EditorClassIdentifier: Assembly-CSharp::PhoAmThucViet.Core.StationData
+  id: hu-2-2
+  displayName: "N\u01B0\u1EDBc s\xE2m"
+  unlockCost: 1680.0000000000002
+  managerCost: 2520.0000000000005
+  baseCost: 504.00000000000006
+  costGrowth: 1.085
+  maxLevel: 50
+  baseProfit: 6
+  cookTime: 1.4
+  doubleProfitLevels: 0a00000019000000320000004b0000006400000096000000c8000000fa000000
+  maxChefs: 4
+  chefCostMultiplier: 3

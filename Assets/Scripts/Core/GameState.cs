@@ -94,6 +94,8 @@ namespace PhoAmThucViet.Core
         // Tiến trình lâu dài, không reset khi sang thành phố mới.
         public long gems;
         public int citiesCompleted;
+        /// <summary>Vòng chơi: 0 = vòng 1. Xong thành phố cuối (Phú Quốc) thì quay về Hà Nội, sang vòng sau, mọi giá đắt hơn.</summary>
+        public int loop;
 
         // Đầu bếp chính: kho trang bị, uid món đang dùng ở 4 ô (Dao, Nồi, Tạp dề, Mũ),
         // và số mảnh của từng vị trí (mảnh dao, mảnh nồi, mảnh tạp dề, mảnh mũ).

@@ -21,11 +21,18 @@ namespace PhoAmThucViet.Core
         public double cookAll, cookHead;
         public double runAll, runHead;
 
+        /// <summary>Phần giá tăng thêm do chơi vòng sau (0,15 = đắt hơn 15%). Không phải từ trang bị.</summary>
+        public double loopCost;
+
         /// <summary>Bản cũ (công cụ mô phỏng trong Editor): tốc độ nấu dạng giảm thời gian 0–1.</summary>
         public double cookSpeed { set => cookAll = value >= 1 ? MaxCookSpeed : value / (1 - value); }
 
         public double ProfitMultiplier => 1 + Clamp(profit, MaxProfit);
-        public double CostMultiplier => 1 - Clamp(discount, MaxDiscount);
+        /// <summary>Hệ số nhân mọi giá: giảm giá của tạp dề, nhân thêm độ khó vòng chơi.</summary>
+        public double CostMultiplier => (1 - Clamp(discount, MaxDiscount)) * (1 + Math.Max(0, loopCost));
+
+        /// <summary>Phần giảm giá từ trang bị (để hiển thị, không tính độ khó vòng).</summary>
+        public double Discount => Clamp(discount, MaxDiscount);
 
         /// <summary>Thời gian nấu của mọi đầu bếp (nhân với thời gian gốc).</summary>
         public double CookTimeMultiplier => 1 / (1 + Clamp(cookAll, MaxCookSpeed));

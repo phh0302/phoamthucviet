@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5c9cceee9a75144da3d360a47e69066, type: 3}
+  m_Name: dn-5
+  m_EditorClassIdentifier: Assembly-CSharp::PhoAmThucViet.Core.VenueData
+  id: dn-5
+  displayName: "Nh\xE0 h\xE0ng b\xEAn c\u1EA7u R\u1ED3ng"
+  multiplier: 1e+24
+  stations:
+  - {fileID: 11400000, guid: ecdbbfc6859cd7a428ac0fe305cbeb1c, type: 2}
+  - {fileID: 11400000, guid: a335e132b417f2c4c82087f822b5e540, type: 2}
+  - {fileID: 11400000, guid: 8c22416a0350b404794fc6ae1ecc4bd0, type: 2}
+  - {fileID: 11400000, guid: a7cd30e12b5de304db4afe8ffbe5601c, type: 2}
+  - {fileID: 11400000, guid: e94aa5a7efaec744488eac3fe9093098, type: 2}
+  - {fileID: 11400000, guid: c0d46681492df7f4f872758337431b88, type: 2}
+  favoriteStations: []
+  favoriteMultiplier: 2
+  dishValueOverride: 0
+  waiterCosts:
+  - 1971.9999999999998
+  - 19720
+  - 246499.99999999997
+  - 985999.9999999999
+  - 5916000
+  waiterSpeedBonus: 0.2
+  requireAllMaxed: 1
+  requireAllManagers: 0
+  chestItems: 3

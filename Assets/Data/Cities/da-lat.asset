@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5036b8053dbc5ca4ba92df0bc64f7259, type: 3}
+  m_Name: da-lat
+  m_EditorClassIdentifier: Assembly-CSharp::PhoAmThucViet.Core.CityData
+  id: da-lat
+  displayName: "\u0110\xE0 L\u1EA1t"
+  venues:
+  - {fileID: 11400000, guid: 58a9ebcf070b2f443a29bc9fb7a90c1b, type: 2}
+  - {fileID: 11400000, guid: b1e8e99cec35cc640a724fc6d97f4d88, type: 2}
+  - {fileID: 11400000, guid: 6051c5f65309fe04c9357ef4e89e02b6, type: 2}
+  - {fileID: 11400000, guid: 1f0c8812c0706c740a8d60bbdbd2b33b, type: 2}
+  - {fileID: 11400000, guid: 8551348cc9faef24a8ad567d23e96d26, type: 2}
+  cityCompleteGems: 50
+  nextCity: {fileID: 11400000, guid: 022a7ba8bd200fe459ec3ef27005db09, type: 2}

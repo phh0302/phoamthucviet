@@ -21,4 +21,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ca58760db7a03b743b1254545b43ca08, type: 2}
   - {fileID: 11400000, guid: 77a033caaaec00444be289424dacbc7b, type: 2}
   cityCompleteGems: 50
-  nextCity: {fileID: 0}
+  nextCity: {fileID: 11400000, guid: 5509f2031f26e3e4c9f68879eff2562d, type: 2}

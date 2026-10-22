@@ -739,7 +739,9 @@ namespace PhoAmThucViet.Visual
             _root.localScale = Vector3.one * 0.6f;
 
             // 2) Bảng "LÊN ĐỜI!" + pháo giấy
-            string title = newCity ? $"LÊN XE ĐI {_game.City.displayName.ToUpper()}!" : "LÊN ĐỜI!";
+            string title = !newCity ? "LÊN ĐỜI!"
+                : _game.Loop > 0 && _game.City == _game.startCity ? $"VÒNG {_game.LoopNumber}: {_game.City.displayName.ToUpper()}!"
+                : $"LÊN XE ĐI {_game.City.displayName.ToUpper()}!";
             var banner = SpriteFactory.Text("Banner", fx, new Vector2(0, 0.6f), title, newCity ? 0.75f : 1.0f, Gold, 102);
             var sub = SpriteFactory.Text("Sub", fx, new Vector2(0, -0.5f), next.displayName, 0.5f, Color.white, 102);
             var bg = SpriteFactory.Block("BannerBg", fx, new Vector2(0, 0.1f), new Vector2(w, 2.6f), new Color(0.55f, 0.12f, 0.10f, 0.95f), 101);

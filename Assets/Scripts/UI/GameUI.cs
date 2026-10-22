@@ -492,7 +492,7 @@ namespace PhoAmThucViet.UI
             // Thanh trên cùng
             _cityText.text = _game.InEventRun
                 ? $"{_game.CurrentEvent?.name ?? "Sự kiện"} · Quán sự kiện"
-                : $"{_game.City.displayName} · Mốc {_game.VenueNumber}/{_game.VenueCount}";
+                : $"{_game.City.displayName} · Mốc {_game.VenueNumber}/{_game.VenueCount}" + (_game.Loop > 0 ? $" · Vòng {_game.LoopNumber}" : "");
             UpdateEventButton();
             _venueText.text = _game.ProfitBoostSecondsLeft > 0
                 ? $"{venue.displayName} · <color=#7CFC7C>tiền x5 còn {Clock(_game.ProfitBoostSecondsLeft)}</color>"
@@ -538,7 +538,8 @@ namespace PhoAmThucViet.UI
             float pct = p.levelsTotal > 0 ? (float)p.levelsDone / p.levelsTotal : 0;
             string next = _game.InEventRun ? "Nâng hết quán sự kiện → quà lớn"
                 : _game.IsLastVenue
-                ? (_game.City.nextCity != null ? $"Lên xe đi {_game.City.nextCity.displayName}" : "Hoàn thành thành phố")
+                ? (_game.City.nextCity != null ? $"Lên xe đi {_game.City.nextCity.displayName}"
+                    : $"Xong hành trình → vòng {_game.LoopNumber + 1} (giá +{(RestaurantController.LoopCostFactor(_game.Loop + 1) - 1) * 100:0}%)")
                 : $"Lên đời → {_game.NextVenue.displayName}";
             _progressTitle.text = next;
             _progressPct.text = $"{pct * 100:0}%";
@@ -556,7 +557,7 @@ namespace PhoAmThucViet.UI
             {
                 string label = _game.InEventRun ? "NHẬN QUÀ QUÁN SỰ KIỆN!"
                     : _game.IsLastVenue
-                    ? (_game.City.nextCity != null ? $"LÊN XE ĐI {_game.City.nextCity.displayName.ToUpper()}!" : "HOÀN THÀNH!")
+                    ? (_game.City.nextCity != null ? $"LÊN XE ĐI {_game.City.nextCity.displayName.ToUpper()}!" : $"VÒNG {_game.LoopNumber + 1}: VỀ LẠI {_game.startCity.displayName.ToUpper()}!")
                     : $"LÊN ĐỜI: {_game.NextVenue.displayName.ToUpper()}!";
                 _levelUpBtn.Set(label, true);
                 // Nhịp đập để mời bấm

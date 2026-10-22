@@ -420,7 +420,7 @@ namespace PhoAmThucViet.UI
             state.EnsureEquippedSlots();
 
             var b = _game.Bonuses;
-            _bonusTexts[0].text = $"Lợi nhuận +{Pct(b.ProfitMultiplier - 1)} · Giảm giá {Pct(1 - b.CostMultiplier)}";
+            _bonusTexts[0].text = $"Lợi nhuận +{Pct(b.ProfitMultiplier - 1)} · Giảm giá {Pct(b.Discount)}";
             _bonusTexts[1].text = $"Món hoàn hảo x6: mọi đầu bếp {Pct(b.PerfectChanceAll)} · chính {Pct(b.PerfectChanceHead)}";
             double cookAll = 1 / b.CookTimeMultiplier - 1, cookHead = 1 / (b.CookTimeMultiplier * b.HeadCookFactor) - 1;
             double runAll = 1 / b.TripTimeMultiplier - 1, runHead = 1 / (b.TripTimeMultiplier * b.HeadTripFactor) - 1;

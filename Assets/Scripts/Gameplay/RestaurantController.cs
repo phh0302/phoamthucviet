@@ -130,7 +130,29 @@ namespace PhoAmThucViet.Gameplay
         private float _eventCheckTimer;
 
         /// <summary>Tổng hiệu ứng từ trang bị đang dùng.</summary>
-        public ChefBonuses Bonuses { get; private set; }
+        private ChefBonuses _gearBonuses;
+
+        /// <summary>Hiệu ứng trang bị + độ khó vòng chơi (giá đắt hơn ở vòng sau; quán sự kiện không bị ảnh hưởng).</summary>
+        public ChefBonuses Bonuses
+        {
+            get
+            {
+                var b = _gearBonuses;
+                b.loopCost = InEventRun ? 0 : LoopCostFactor(Loop) - 1;
+                return b;
+            }
+            private set => _gearBonuses = value;
+        }
+
+        // ---------- Vòng chơi ----------
+        /// <summary>Mỗi vòng mọi giá mở quầy / nâng cấp / thuê người / mua bàn / cải tiến đắt hơn 15% (cộng dồn kiểu nhân).</summary>
+        public const double LoopCostGrowth = 1.15;
+        public int Loop => State != null ? Mathf.Max(0, State.loop) : 0;
+        /// <summary>Số vòng hiển thị (bắt đầu từ 1).</summary>
+        public int LoopNumber => Loop + 1;
+        public static double LoopCostFactor(int loop) => Math.Pow(LoopCostGrowth, Math.Max(0, loop));
+        /// <summary>Thành phố cuối hành trình: xong thì quay về thành phố đầu, sang vòng sau.</summary>
+        public bool IsLastCity => City != null && City.nextCity == null;
 
         /// <summary>Hệ số tăng tốc (ví dụ x2 khi xem quảng cáo).</summary>
         public float SpeedMultiplier { get; private set; } = 1f;
@@ -1256,8 +1278,15 @@ namespace PhoAmThucViet.Gameplay
                 AnalyticsService.Log("city_complete", ("city", City.id), ("minutes", Math.Round(State.secondsInCity / 60f, 1)),
                     ("cities_done", State.citiesCompleted));
                 extra = $" · xong {City.displayName}, +{City.cityCompleteGems} đá quý";
-                // Hết thành phố trong bản thử thì chơi lại thành phố cuối.
                 if (City.nextCity != null) City = City.nextCity;
+                else
+                {
+                    // Hết hành trình: quay về thành phố đầu, sang vòng sau, giá đắt hơn
+                    State.loop++;
+                    City = startCity;
+                    extra += $" · bắt đầu VÒNG {LoopNumber} (giá +{(LoopCostFactor(Loop) - 1) * 100:0}%)";
+                    AnalyticsService.Log("loop_start", ("loop", LoopNumber));
+                }
                 State.StartCity(City);
             }
             PendingOffline = BigNum.Zero;

@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5c9cceee9a75144da3d360a47e69066, type: 3}
+  m_Name: dl-2
+  m_EditorClassIdentifier: Assembly-CSharp::PhoAmThucViet.Core.VenueData
+  id: dl-2
+  displayName: "G\xE1nh ch\u1EE3 \u0111\xEAm"
+  multiplier: 1e+31
+  stations:
+  - {fileID: 11400000, guid: 60d9358dfd8fe8544a85ad8167e0e763, type: 2}
+  - {fileID: 11400000, guid: 70508ee249729704986d40eee2ca72a9, type: 2}
+  - {fileID: 11400000, guid: 56c43d4501675554ea9acaa14422a958, type: 2}
+  favoriteStations: []
+  favoriteMultiplier: 2
+  dishValueOverride: 0
+  waiterCosts:
+  - 1800
+  - 18000
+  waiterSpeedBonus: 0.2
+  requireAllMaxed: 1
+  requireAllManagers: 0
+  chestItems: 1
