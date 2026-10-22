@@ -311,7 +311,8 @@ Chỉnh số: chọn file trong `Assets/Data/Stations` hoặc `Assets/Data/Citie
 - [x] Tiền thật bay lên trên quầy khi quản lý tự thu ("+1.2K"); quầy chưa có quản lý hiện "Thu ..."
 - [x] Chạm vào quầy: thu tiền đang chờ (tiền bay lên), viền vàng quanh quầy được chọn, bảng dưới hiện bảng nâng cấp riêng của quầy đó (nút "Đóng" để quay lại); chạm chỗ trống để bỏ chọn. Dùng Input System mới, chạy cả chuột lẫn cảm ứng
 - [x] Game tự nhận hình vẽ theo tên file trong `Assets/Resources/Sprites/` (có hình thì dùng, chưa có thì dùng khối màu tạm); ảnh thả vào tự được nhập đúng kiểu Sprite
-- [ ] Tạo hình bằng AI theo `art-prompts.md` (8 nhân vật, quầy/bàn/sàn/tường cho 5 mốc, 19 món ăn, đĩa)
+- [x] Hình món ăn: đủ 92 món của 10 thành phố + 4 quán sự kiện, vẽ bằng code (`Tools/draw_food.py`, chạy `python3 Tools/draw_food.py Assets/Resources/Sprites/food` hoặc thêm tên file để vẽ lại vài món), cùng phong cách icon trang bị: tô sứ viền xanh, đĩa, ly đá, tách trà, nồi đất, lẩu, lá chuối… Tên file = tên món bỏ dấu (SpriteLibrary.Slug); game tự hiện trên quầy. Thêm món mới thì thêm một hàm `@dish("ten-mon")` trong script hoặc thả ảnh AI cùng tên
+- [ ] (Không bắt buộc) Tạo hình bằng AI theo `art-prompts.md` thay cho hình vẽ bằng code: nhân vật, quầy/bàn/sàn/tường, đĩa
 - [x] Hiệu ứng lên đời: quán cũ thu nhỏ và tối dần → bảng "LÊN ĐỜI!" (hoặc "LÊN XE ĐI HẠ LONG!") bật ra kèm pháo giấy → quán mới phóng to nảy ra (~2,6 giây). Nút "Qua mốc ngay (chỉ để thử)" để xem nhanh
 
 ### Giai đoạn 4 – Giao diện thật
