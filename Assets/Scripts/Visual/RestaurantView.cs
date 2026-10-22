@@ -75,7 +75,9 @@ namespace PhoAmThucViet.Visual
             public readonly List<SpriteRenderer> plates = new List<SpriteRenderer>();
             public readonly List<SpriteRenderer> stars = new List<SpriteRenderer>();
             public float starPulse; // nảy ngôi sao vừa sáng
-            public SpriteRenderer plaque; // bảng tên món trên mặt quầy
+            public SpriteRenderer plaque; // biển món trên mặt quầy (khung hình món, hoặc bảng tên nếu chưa có hình)
+            public SpriteRenderer food;   // hình món ăn trên biển (null nếu chưa có hình)
+            public Vector3 foodScale;
             public GameObject prop, propLocked; // quầy 3D (đang mở / chưa mở); null nếu dùng hình vẽ counter_*.png
             public Transform bestBadge; // bảng "BÁN CHẠY" khi quầy đang là best seller
             public TextMesh bestText;
@@ -293,7 +295,8 @@ namespace PhoAmThucViet.Visual
                 var sv = new StationView { data = venue.stations[i], width = counterW };
                 sv.pos = new Vector2(-usable / 2 + slot * (i + 0.5f), top - CounterDepthFromTop);
                 sv.pickup = sv.pos + new Vector2(0, -0.9f);
-                sv.highlight = SpriteFactory.Block("Highlight", _root, sv.pos + new Vector2(0, 0.25f), new Vector2(counterW + 0.25f, 1.55f), Gold, 3);
+                sv.highlight = SpriteFactory.Block("Highlight", _root, sv.pos + new Vector2(0, (1.03f + Props.CounterBaseOffset - 0.12f) * 0.5f),
+                    new Vector2(counterW + 0.25f, 1.03f - Props.CounterBaseOffset + 0.12f), Gold, 3);
                 sv.highlight.gameObject.SetActive(false);
                 sv.counter = SpriteFactory.Picture("Counter " + sv.data.displayName, _root, sv.pos, new Vector2(counterW, 0.8f),
                     CounterColor, 3, $"venues/counter_{tier}", out sv.counterIsPicture);
@@ -305,18 +308,29 @@ namespace PhoAmThucViet.Visual
                     sv.prop = Props.Counter(_root, sv.pos, vi, counterW, i, false);
                     sv.propLocked = Props.Counter(_root, sv.pos, vi, counterW, i, true);
                 }
-                // Hình món ăn trên quầy (food/<tên không dấu>.png), nếu có
-                var food = SpriteFactory.Picture("Food", _root, sv.pos + new Vector2(0, 0.05f), new Vector2(0.7f, 0.6f), Color.clear, 7,
+                // Biển món trên mặt trước quầy: hình món ăn (food/<tên không dấu>.png) trong khung biển theo mốc
+                // (giấy viền đỏ / ván gỗ / biển men xanh / sơn mài đỏ). Chưa có hình thì ghi tên món như cũ.
+                // Mặt trước quầy (nhìn trên màn hình) chạy từ chân quầy tới mép mặt quầy (~0,07): đặt biển ở giữa
+                Vector2 namePos = sv.pos + new Vector2(0, (Props.CounterBaseOffset + 0.07f) * 0.5f);
+                float pic = Mathf.Min(counterW * 0.42f, 0.44f);
+                var food = SpriteFactory.Picture("Food", _root, namePos, new Vector2(pic, pic), Color.clear, 10,
                     "food/" + SpriteLibrary.Slug(sv.data.displayName), out bool hasFood);
-                if (!hasFood) Destroy(food.gameObject);
-                // Bảng tên món gắn trên mặt trước quầy (giấy viền đỏ / ván gỗ / biển men xanh / sơn mài đỏ)
-                int nameLen = Mathf.Max(4, sv.data.displayName.Length);
-                float nameSize = Mathf.Min(0.22f, counterW * 0.82f / (nameLen * 0.55f));
-                Vector2 namePos = sv.pos + new Vector2(0, -0.18f);
-                float plaqueW = Mathf.Min(counterW * 0.95f, nameLen * nameSize * 0.55f + 0.32f);
-                sv.plaque = SceneArt.Sliced("Plaque", _root, namePos, new Vector2(plaqueW, 0.34f), SceneArt.Plaque(vi), 9);
-                sv.name = SpriteFactory.Text("Name", _root, namePos + new Vector2(0, 0.01f), sv.data.displayName, nameSize, SceneArt.PlaqueText(vi), 10);
-                sv.level = SpriteFactory.Text("Level", _root, sv.pos + new Vector2(0, -0.6f), "", 0.2f, Color.white, 10);
+                if (hasFood)
+                {
+                    sv.food = food;
+                    sv.foodScale = food.transform.localScale;
+                    sv.plaque = SceneArt.Sliced("Plaque", _root, namePos, new Vector2(pic + 0.14f, pic + 0.08f), SceneArt.Plaque(vi), 9);
+                }
+                else
+                {
+                    Destroy(food.gameObject);
+                    int nameLen = Mathf.Max(4, sv.data.displayName.Length);
+                    float nameSize = Mathf.Min(0.22f, counterW * 0.82f / (nameLen * 0.55f));
+                    float plaqueW = Mathf.Min(counterW * 0.95f, nameLen * nameSize * 0.55f + 0.32f);
+                    sv.plaque = SceneArt.Sliced("Plaque", _root, namePos, new Vector2(plaqueW, 0.34f), SceneArt.Plaque(vi), 9);
+                    sv.name = SpriteFactory.Text("Name", _root, namePos + new Vector2(0, 0.01f), sv.data.displayName, nameSize, SceneArt.PlaqueText(vi), 10);
+                }
+                sv.level = SpriteFactory.Text("Level", _root, sv.pos + new Vector2(0, Props.CounterBaseOffset - 0.15f), "", 0.2f, Color.white, 10);
                 // Thanh nấu nằm sát mép sau mặt quầy (không đè lên người đầu bếp)
                 SpriteFactory.Block("BarBg", _root, sv.pos + new Vector2(0, BarY), new Vector2(counterW * 0.9f, 0.08f), new Color(0, 0, 0, 0.35f), 9);
                 sv.barFill = SpriteFactory.Block("BarFill", _root, sv.pos + new Vector2(0, BarY), new Vector2(0, 0.08f), Gold, 10);
@@ -330,7 +344,7 @@ namespace PhoAmThucViet.Visual
                 badge.gameObject.SetActive(false);
                 sv.bestBadge = badge;
                 // 3 ô sao món ăn ngay dưới dòng cấp
-                float starY = sv.pos.y - 0.86f;
+                float starY = sv.pos.y + Props.CounterBaseOffset - 0.41f;
                 for (int k = 0; k < DishStars.StarsPerTier; k++)
                 {
                     var star = SpriteFactory.Block("Star", _root, new Vector2(sv.pos.x + (k - 1) * 0.26f, starY), new Vector2(0.24f, 0.24f), Color.white, 11);
@@ -572,7 +586,7 @@ namespace PhoAmThucViet.Visual
         private void BuildZones(int vi, float top, float width)
         {
             float counterY = top - CounterDepthFromTop;
-            float kitchenTop = top - WallVisible, counterFront = counterY - 0.42f, stripBottom = counterY - 1.1f;
+            float kitchenTop = top - WallVisible, counterFront = counterY + Props.CounterBaseOffset, stripBottom = counterFront - 0.68f;
             SceneArt.Tiled("KitchenFloor", _root, new Vector2(0, (kitchenTop + counterFront) / 2), new Vector2(width, kitchenTop - counterFront),
                 SceneArt.KitchenFloor(vi), 1);
             SceneArt.Tiled("CounterStrip", _root, new Vector2(0, (counterFront + stripBottom) / 2), new Vector2(width, counterFront - stripBottom),
@@ -822,6 +836,16 @@ namespace PhoAmThucViet.Visual
                     ? (unlocked ? Color.white : new Color(0.45f, 0.45f, 0.45f, 0.9f))
                     : (unlocked ? CounterColor : LockedColor);
                 sv.plaque.color = unlocked ? Color.white : new Color(0.62f, 0.62f, 0.62f, 1f);
+                if (sv.food != null)
+                {
+                    // Quầy chưa mở: hình món xám mờ. Đang nấu: hình món nhún nhẹ
+                    sv.food.color = unlocked ? Color.white : new Color(0.55f, 0.55f, 0.55f, 0.75f);
+                    bool cooking = false;
+                    foreach (var w in _game.Workers)
+                        if (w.task == RestaurantController.TaskKind.Cook && w.station == sv.data) { cooking = true; break; }
+                    float bob = cooking ? 1f + 0.05f * Mathf.Abs(Mathf.Sin(Time.time * 6f)) : 1f;
+                    sv.food.transform.localScale = sv.foodScale * bob;
+                }
                 if (sv.prop != null)
                 {
                     if (sv.prop.activeSelf != unlocked) sv.prop.SetActive(unlocked);

@@ -150,7 +150,9 @@ namespace PhoAmThucViet.Visual
             return new Color(g, g, g);
         }
 
-        public const float CounterHeight = 0.55f, CounterDepth = 0.75f;
+        public const float CounterHeight = 0.75f, CounterDepth = 0.75f;
+        /// <summary>Hạ chân quầy xuống để mặt quầy (chỗ đầu bếp đứng nấu) vẫn ở chỗ cũ khi quầy cao hơn bản đầu (0,55).</summary>
+        public const float CounterBaseOffset = -0.42f - (CounterHeight - 0.55f) * 0.8829f;
 
         /// <summary>
         /// Quầy nấu rộng width, tâm hình quanh pos. cookware = kiểu dụng cụ trên quầy (nồi, chảo, xửng hấp, vỉ nướng).
@@ -161,7 +163,7 @@ namespace PhoAmThucViet.Visual
             float w = Mathf.Round(width * 20f) / 20f;
             int kind = locked ? -1 : ((cookware % 4) + 4) % 4;
             var mesh = Cached($"counter{tier}_{w:0.00}_{kind}", () => CounterMesh(tier, w, kind));
-            return Spawn(locked ? "Counter3D (khóa)" : "Counter3D", parent, pos + new Vector2(0, -0.42f), mesh);
+            return Spawn(locked ? "Counter3D (khóa)" : "Counter3D", parent, pos + new Vector2(0, CounterBaseOffset), mesh);
         }
 
         private static Mesh CounterMesh(int tier, float w, int kind)
