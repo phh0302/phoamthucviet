@@ -27,7 +27,7 @@ namespace PhoAmThucViet.UI
         private ScrollRect _scroll;
         private readonly Text[] _bonusTexts = new Text[4];
 
-        private class SlotView { public Image bg; public Text title, item, detail, shards; }
+        private class SlotView { public Image bg, frame, icon; public Text title, item, detail, shards; }
         private readonly SlotView[] _slots = new SlotView[4];
 
         private UIButton _buyChest, _freeGems, _blueprintBtn;
@@ -36,7 +36,7 @@ namespace PhoAmThucViet.UI
         private RectTransform _forge, _forgeList;
         private Text _forgeInfo;
         private bool _forgeOpen;
-        private class ForgeRow { public string id; public Image bg; public Text name, info; public UIButton craft; }
+        private class ForgeRow { public string id; public Image bg, icon; public Text name, info; public UIButton craft; }
         private readonly List<ForgeRow> _forgeRows = new List<ForgeRow>();
         private readonly UIButton[] _filters = new UIButton[5];
         private Text _countText;
@@ -58,7 +58,7 @@ namespace PhoAmThucViet.UI
         {
             public OwnedEquipment owned;
             public EquipmentData item;
-            public Image bg, strip;
+            public Image bg, frame, icon;
             public Text name, info, bonus;
             public UIButton equip, levelUp, dismantle;
             public float confirmUntil; // đồ hiếm: bấm Phân rã lần 2 trong 2 giây mới phân rã
@@ -96,14 +96,20 @@ namespace PhoAmThucViet.UI
                 sv.bg = btn.bg;
                 sv.bg.rectTransform.Place(new Vector2(i * 0.25f, 0), new Vector2((i + 1) * 0.25f, 1), new Vector2(6, 0), new Vector2(-6, 0));
                 var t = sv.bg.transform;
-                sv.title = UIKit.Label("Title", t, EquipmentData.SlotName((EquipSlot)i).ToUpper(), 24, Palette.Gold, TextAnchor.MiddleCenter, true);
-                sv.title.rectTransform.Place(new Vector2(0, 1), new Vector2(1, 1), new Vector2(8, -44), new Vector2(-8, -8));
-                sv.item = UIKit.Label("Item", t, "", 24, Color.white, TextAnchor.MiddleCenter, true);
-                sv.item.rectTransform.Place(new Vector2(0, 0.42f), new Vector2(1, 0.80f), new Vector2(8, 0), new Vector2(-8, 0));
-                sv.detail = UIKit.Label("Detail", t, "", 21, new Color(1, 1, 1, 0.85f), TextAnchor.MiddleCenter);
-                sv.detail.rectTransform.Place(new Vector2(0, 0.20f), new Vector2(1, 0.44f), new Vector2(8, 0), new Vector2(-8, 0));
-                sv.shards = UIKit.Label("Shards", t, "", 21, new Color(0.6f, 0.9f, 1f), TextAnchor.MiddleCenter, true);
-                sv.shards.rectTransform.Place(new Vector2(0, 0), new Vector2(1, 0.22f), new Vector2(8, 6), new Vector2(-8, 0));
+                sv.title = UIKit.Label("Title", t, EquipmentData.SlotName((EquipSlot)i).ToUpper(), 22, Palette.Gold, TextAnchor.MiddleCenter, true);
+                sv.title.rectTransform.Place(new Vector2(0, 1), new Vector2(1, 1), new Vector2(8, -38), new Vector2(-8, -4));
+                // Icon món đang mặc (ô trống: hình mờ món Thường)
+                sv.frame = GearIcons.MakeFrame("Frame", t, out sv.icon);
+                sv.frame.rectTransform.anchorMin = sv.frame.rectTransform.anchorMax = new Vector2(0.5f, 1);
+                sv.frame.rectTransform.pivot = new Vector2(0.5f, 1);
+                sv.frame.rectTransform.anchoredPosition = new Vector2(0, -38);
+                sv.frame.rectTransform.sizeDelta = new Vector2(84, 84);
+                sv.item = UIKit.Label("Item", t, "", 21, Color.white, TextAnchor.MiddleCenter, true);
+                sv.item.rectTransform.Place(new Vector2(0, 0.30f), new Vector2(1, 0.46f), new Vector2(6, 0), new Vector2(-6, 0));
+                sv.detail = UIKit.Label("Detail", t, "", 18, new Color(1, 1, 1, 0.85f), TextAnchor.MiddleCenter);
+                sv.detail.rectTransform.Place(new Vector2(0, 0.155f), new Vector2(1, 0.31f), new Vector2(6, 0), new Vector2(-6, 0));
+                sv.shards = UIKit.Label("Shards", t, "", 19, new Color(0.6f, 0.9f, 1f), TextAnchor.MiddleCenter, true);
+                sv.shards.rectTransform.Place(new Vector2(0, 0), new Vector2(1, 0.16f), new Vector2(6, 4), new Vector2(-6, 0));
                 _slots[i] = sv;
             }
 
@@ -323,10 +329,14 @@ namespace PhoAmThucViet.UI
                 var r = new ForgeRow { id = item.id };
                 r.bg = UIKit.Panel("Row", _forgeList, new Color(0.3f, 0.16f, 0.22f), UIKit.Rounded);
                 r.bg.rectTransform.Place(new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, -(y + 190)), new Vector2(0, -y));
+                var frame = GearIcons.MakeFrame("Frame", r.bg.transform, out r.icon);
+                frame.rectTransform.Place(new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(14, -75), new Vector2(164, 75));
+                frame.color = GearIcons.FrameColor(Rarity.ToiThuong);
+                GearIcons.Apply(r.icon, GearIcons.For(item), Color.white);
                 r.name = UIKit.Label("Name", r.bg.transform, item.displayName, 28, RarityColors[4], TextAnchor.MiddleLeft, true);
-                r.name.rectTransform.Place(new Vector2(0, 1), new Vector2(0.66f, 1), new Vector2(20, -50), new Vector2(0, -6));
+                r.name.rectTransform.Place(new Vector2(0, 1), new Vector2(0.66f, 1), new Vector2(178, -50), new Vector2(0, -6));
                 r.info = UIKit.Label("Info", r.bg.transform, "", 19, new Color(1, 1, 1, 0.85f), TextAnchor.UpperLeft);
-                r.info.rectTransform.Place(new Vector2(0, 0), new Vector2(0.66f, 1), new Vector2(20, 6), new Vector2(0, -52));
+                r.info.rectTransform.Place(new Vector2(0, 0), new Vector2(0.66f, 1), new Vector2(178, 6), new Vector2(0, -52));
                 string id = item.id;
                 r.craft = UIKit.MakeButton("Craft", r.bg.transform, "", 24, Palette.Green, () => OnCraft(id));
                 r.craft.bg.rectTransform.Place(new Vector2(0.66f, 0), new Vector2(1, 1), new Vector2(8, 14), new Vector2(-14, -14));
@@ -427,12 +437,16 @@ namespace PhoAmThucViet.UI
                     sv.item.text = "Trống";
                     sv.item.color = new Color(1, 1, 1, 0.5f);
                     sv.detail.text = EquipmentData.EffectName((EquipSlot)i);
+                    sv.frame.color = new Color(1, 1, 1, 0.12f);
+                    GearIcons.Apply(sv.icon, GearIcons.ForEmptySlot((EquipSlot)i), new Color(0, 0, 0, 0.35f));
                 }
                 else
                 {
                     sv.item.text = item.displayName;
                     sv.item.color = Color.Lerp(RarityColors[(int)item.rarity], Color.white, 0.25f);
                     sv.detail.text = $"Cấp {owned.level} · lợi nhuận +{Pct(item.BonusAt(owned.level))}";
+                    sv.frame.color = GearIcons.FrameColor(item.rarity);
+                    GearIcons.Apply(sv.icon, GearIcons.For(item), Color.white);
                 }
                 sv.shards.text = $"{state.shards[i]} mảnh";
                 sv.bg.color = _filter == i ? new Color(0.55f, 0.38f, 0.18f) : new Color(0.30f, 0.22f, 0.16f);
@@ -495,14 +509,17 @@ namespace PhoAmThucViet.UI
                 c.bg.gameObject.AddComponent<LayoutElement>().preferredHeight = 172;
                 var t = c.bg.transform;
 
-                c.strip = UIKit.Panel("Rarity", t, RarityColors[(int)item.rarity], UIKit.Pill);
-                c.strip.rectTransform.TopLeft(12, 14, 14, 122);
-                c.name = UIKit.Label("Name", t, item.displayName, 32, RarityColors[(int)item.rarity] * 0.8f + new Color(0, 0, 0, 0.2f), TextAnchor.MiddleLeft, true);
-                c.name.rectTransform.TopLeft(40, 10, 430, 46);
-                c.info = UIKit.Label("Info", t, "", 23, Palette.TextSoft);
-                c.info.rectTransform.TopLeft(40, 56, 430, 36);
-                c.bonus = UIKit.Label("Bonus", t, "", 21, Palette.TextDark, TextAnchor.UpperLeft);
-                c.bonus.rectTransform.TopLeft(40, 92, 430, 74);
+                // Icon trong khung màu độ hiếm
+                c.frame = GearIcons.MakeFrame("Frame", t, out c.icon);
+                c.frame.rectTransform.TopLeft(12, 14, 130, 144);
+                c.frame.color = GearIcons.FrameColor(item.rarity);
+                GearIcons.Apply(c.icon, GearIcons.For(item), Color.white);
+                c.name = UIKit.Label("Name", t, item.displayName, 30, RarityColors[(int)item.rarity] * 0.8f + new Color(0, 0, 0, 0.2f), TextAnchor.MiddleLeft, true);
+                c.name.rectTransform.TopLeft(154, 10, 320, 46);
+                c.info = UIKit.Label("Info", t, "", 22, Palette.TextSoft);
+                c.info.rectTransform.TopLeft(154, 56, 320, 36);
+                c.bonus = UIKit.Label("Bonus", t, "", 20, Palette.TextDark, TextAnchor.UpperLeft);
+                c.bonus.rectTransform.TopLeft(154, 92, 320, 74);
 
                 var card = c;
                 c.equip = UIKit.MakeButton("Equip", t, "", 24, Palette.Blue, () => OnEquip(card));

@@ -44,6 +44,10 @@ namespace PhoAmThucViet.Visual
         private bool _hasLast;
         private float _speed, _phase, _yawNow = 180f, _moveYaw = 180f, _seed;
         private Animator _anim;
+
+        // Trang bị đang mặc (chỉ đầu bếp chính): mũ, tạp dề trên thân; dao tay phải; nồi/chảo tay trái
+        private Transform _hat, _apron, _knife, _ware;
+        private string _gHat = "?", _gApron = "?", _gKnife = "?", _gWare = "?";
         private HashSet<string> _animParams;
 
         // ================= Tạo nhân vật =================
@@ -116,6 +120,36 @@ namespace PhoAmThucViet.Visual
             var leg = ChibiLooks.LegMesh(look);
             _legL = Part("LegL", _yaw, leg, new Vector3(-0.16f, 0.42f, 0));
             _legR = Part("LegR", _yaw, leg, new Vector3(0.16f, 0.42f, 0));
+            if (kind == ChibiKind.HeadChef) SetGear(null, null, null, null); // mũ đầu bếp mặc định
+        }
+
+        /// <summary>
+        /// Mặc trang bị cho đầu bếp chính theo mã món (null = không có). Chỉ dựng lại phần nào đổi,
+        /// nên gọi mỗi khung hình cũng được. Nhân vật dùng mô hình prefab thì bỏ qua.
+        /// </summary>
+        public void SetGear(string hat, string apron, string knife, string cookware)
+        {
+            if (_body == null) return;
+            if (hat != _gHat) { _gHat = hat; Swap(ref _hat, "Hat", _body, GearLooks.Hat(hat)); }
+            if (apron != _gApron) { _gApron = apron; Swap(ref _apron, "Apron", _body, GearLooks.Apron(apron)); }
+            if (knife != _gKnife)
+            {
+                _gKnife = knife;
+                Swap(ref _knife, "Knife", _armR, GearLooks.Knife(knife));
+                if (_knife != null)
+                {
+                    // Xoay lưỡi quanh trục tay cho lộ mặt dao về phía camera, phóng to chút cho dễ nhìn
+                    _knife.localRotation = Quaternion.Euler(0, -55f, 0);
+                    _knife.localScale = Vector3.one * 1.2f;
+                }
+            }
+            if (cookware != _gWare) { _gWare = cookware; Swap(ref _ware, "Cookware", _armL, GearLooks.Cookware(cookware)); }
+        }
+
+        private static void Swap(ref Transform slot, string name, Transform parent, Mesh mesh)
+        {
+            if (slot != null) Destroy(slot.gameObject);
+            slot = mesh != null ? Part(name, parent, mesh, Vector3.zero) : null;
         }
 
         private static Transform Child(string name, Transform parent, Vector3 pos)
@@ -205,6 +239,10 @@ namespace PhoAmThucViet.Visual
                     bodyY = Mathf.Abs(Mathf.Sin(t * 8f)) * 0.15f;
                     break;
             }
+
+            // Dao cất đi khi bưng khay / ngồi / reo mừng; nồi chảo chỉ cầm khi đang nấu
+            if (_knife != null) _knife.gameObject.SetActive(action == ChibiAction.Auto || action == ChibiAction.Cook);
+            if (_ware != null) _ware.gameObject.SetActive(action == ChibiAction.Cook);
 
             _body.localPosition = new Vector3(0, bodyY + hip, 0);
             _body.localRotation = Quaternion.Euler(lean, 0, 0);

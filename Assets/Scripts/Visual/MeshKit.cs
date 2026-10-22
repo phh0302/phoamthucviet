@@ -15,6 +15,9 @@ namespace PhoAmThucViet.Visual
         private readonly List<Vector3> _o = new List<Vector3>(); // hướng nới viền (khối hộp: từ tâm ra góc, để viền liền mạch)
         private readonly List<int> _t = new List<int>();
 
+        /// <summary>Biến đổi (dời / xoay) áp cho các khối thêm sau. Đặt lại Matrix4x4.identity khi xong.</summary>
+        public Matrix4x4 M = Matrix4x4.identity;
+
         private static Color WithOutline(Color c, bool outline) => new Color(c.r, c.g, c.b, outline ? 1f : 0f);
 
         /// <summary>Thêm tam giác, tự đảo chiều để mặt trước quay ra ngoài (theo pháp tuyến các đỉnh).</summary>
@@ -30,6 +33,9 @@ namespace PhoAmThucViet.Visual
 
         private int Vert(Vector3 p, Vector3 n, Color c, Vector3 outlineDir)
         {
+            p = M.MultiplyPoint3x4(p);
+            n = M.MultiplyVector(n).normalized;
+            outlineDir = M.MultiplyVector(outlineDir);
             _v.Add(p); _n.Add(n); _c.Add(c); _o.Add(outlineDir);
             return _v.Count - 1;
         }
@@ -146,6 +152,51 @@ namespace PhoAmThucViet.Visual
                 Vert(center + new Vector3(Mathf.Cos(ph), 0, Mathf.Sin(ph)) * r, normal, color);
             }
             for (int j = 0; j < seg; j++) Tri(c, start + j, start + j + 1);
+        }
+
+        /// <summary>
+        /// Hình phẳng có bề dày (ngôi sao, hình thoi…): đa giác pts quanh tâm trên mặt XY, mặt trước quay +Z.
+        /// Đa giác lõm hình sao vẫn được vì tam giác toả ra từ tâm.
+        /// </summary>
+        public MeshKit Prism(Vector3 center, IList<Vector2> pts, float depth, Color color, bool outline = false)
+        {
+            color = WithOutline(color, outline);
+            for (int side = -1; side <= 1; side += 2)
+            {
+                var n = new Vector3(0, 0, side);
+                var off = new Vector3(0, 0, side * depth * 0.5f);
+                int c = Vert(center + off, n, color);
+                int start = _v.Count;
+                foreach (var p in pts) Vert(center + off + new Vector3(p.x, p.y, 0), n, color);
+                for (int i = 0; i < pts.Count; i++) Tri(c, start + i, start + (i + 1) % pts.Count);
+            }
+            for (int i = 0; i < pts.Count; i++)
+            {
+                Vector2 a = pts[i], b = pts[(i + 1) % pts.Count];
+                Vector2 e = b - a;
+                var n = new Vector3(e.y, -e.x, 0).normalized;
+                if (Vector2.Dot(new Vector2(n.x, n.y), (a + b) * 0.5f) < 0) n = -n;
+                int s0 = Vert(center + new Vector3(a.x, a.y, -depth * 0.5f), n, color);
+                Vert(center + new Vector3(b.x, b.y, -depth * 0.5f), n, color);
+                Vert(center + new Vector3(b.x, b.y, depth * 0.5f), n, color);
+                Vert(center + new Vector3(a.x, a.y, depth * 0.5f), n, color);
+                Tri(s0, s0 + 1, s0 + 2);
+                Tri(s0, s0 + 2, s0 + 3);
+            }
+            return this;
+        }
+
+        /// <summary>Các đỉnh ngôi sao n cánh bán kính r, cánh đầu tiên chĩa lên.</summary>
+        public static Vector2[] StarPoints(float r, int n = 5, float inner = 0.45f)
+        {
+            var pts = new Vector2[n * 2];
+            for (int i = 0; i < n * 2; i++)
+            {
+                float rr = i % 2 == 0 ? r : r * inner;
+                float a = Mathf.PI / 2 + i * Mathf.PI / n;
+                pts[i] = new Vector2(Mathf.Cos(a) * rr, Mathf.Sin(a) * rr);
+            }
+            return pts;
         }
 
         public Mesh Build(string name)

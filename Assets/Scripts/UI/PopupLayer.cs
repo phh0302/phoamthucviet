@@ -19,6 +19,7 @@ namespace PhoAmThucViet.UI
         private UIButton _primary, _secondary;
         private readonly Text[] _rewardRows = new Text[6];
         private readonly int[] _rowRarity = new int[6];
+        private readonly Image[] _rowFrames = new Image[6], _rowIcons = new Image[6];
         private int _revealed;           // số món rương đã lật
         private Image _glow;             // quầng sáng sau khung, màu theo món hiếm nhất đã lật
         private const float RevealStart = 0.35f, RevealGap = 0.4f;
@@ -58,7 +59,13 @@ namespace PhoAmThucViet.UI
             {
                 _rewardRows[i] = UIKit.Label("Row" + i, _box, "", 30, Palette.TextDark, TextAnchor.MiddleLeft, true);
                 _rewardRows[i].rectTransform.Place(new Vector2(0, 1), new Vector2(1, 1),
-                    new Vector2(60, -220 - i * 68), new Vector2(-40, -160 - i * 68));
+                    new Vector2(110, -220 - i * 68), new Vector2(-40, -160 - i * 68));
+                // Icon món ở đầu dòng (con của dòng chữ nên cùng hiện / phóng to theo hiệu ứng lật)
+                _rowFrames[i] = GearIcons.MakeFrame("Frame", _rewardRows[i].transform, out _rowIcons[i]);
+                _rowFrames[i].rectTransform.anchorMin = _rowFrames[i].rectTransform.anchorMax = new Vector2(0, 0.5f);
+                _rowFrames[i].rectTransform.pivot = new Vector2(1, 0.5f);
+                _rowFrames[i].rectTransform.anchoredPosition = new Vector2(-8, 0);
+                _rowFrames[i].rectTransform.sizeDelta = new Vector2(62, 62);
             }
 
             _primary = UIKit.MakeButton("Primary", _box, "", 34, Palette.Green, OnPrimary);
@@ -129,6 +136,7 @@ namespace PhoAmThucViet.UI
             _root.SetAsLastSibling();
             _openTime = Time.unscaledTime;
             foreach (var row in _rewardRows) { row.text = ""; row.gameObject.SetActive(true); row.rectTransform.localScale = Vector3.one; }
+            foreach (var f in _rowFrames) f.gameObject.SetActive(false);
             _revealed = 0;
             _shownRewards = _game.LastRewards.Count;
             _body.text = "";
@@ -156,6 +164,7 @@ namespace PhoAmThucViet.UI
                     _rewardRows[i].text = $"{EquipmentData.RarityName(item.rarity)}: {item.displayName} · {EquipmentData.SlotName(item.slot)} · {GearBook.Describe(item, 1)}";
                     _rewardRows[i].color = ChefPage.RarityColors[(int)item.rarity] * 0.85f + new Color(0, 0, 0, 0.15f);
                     _rowRarity[i] = (int)item.rarity;
+                    SetRowIcon(i, item, item.rarity);
                     i++;
                 }
                 // Bản vẽ đồ Tối thượng từ rương sự kiện
@@ -167,6 +176,7 @@ namespace PhoAmThucViet.UI
                         _rewardRows[i].text = $"Bản vẽ Tối thượng: {bp.displayName} · {EquipmentData.SlotName(bp.slot)} (ghép ở tab Đầu bếp)";
                         _rewardRows[i].color = ChefPage.RarityColors[(int)Rarity.ToiThuong] * 0.85f + new Color(0, 0, 0, 0.15f);
                         _rowRarity[i] = (int)Rarity.ToiThuong;
+                        SetRowIcon(i, bp, Rarity.ToiThuong);
                     }
                 }
                 _primary.Set("Tuyệt!", true);
@@ -192,6 +202,14 @@ namespace PhoAmThucViet.UI
         {
             int s = Mathf.Max(0, (int)seconds);
             return s >= 3600 ? $"{s / 3600} giờ {s % 3600 / 60} phút" : $"{s / 60} phút {s % 60} giây";
+        }
+    
+        private void SetRowIcon(int i, EquipmentData item, Rarity rarity)
+        {
+            var sprite = GearIcons.For(item);
+            _rowFrames[i].gameObject.SetActive(sprite != null);
+            _rowFrames[i].color = GearIcons.FrameColor(rarity);
+            GearIcons.Apply(_rowIcons[i], sprite, Color.white);
         }
     }
 }

@@ -1137,6 +1137,7 @@ namespace PhoAmThucViet.Visual
             foreach (var wv in _workers)
             {
                 var w = wv.data;
+                if (w.kind == RestaurantController.WorkerKind.HeadChef) ApplyHeadChefGear(wv.chibi);
                 if (w.task == RestaurantController.TaskKind.Idle)
                 {
                     wv.taskId = 0;
@@ -1170,6 +1171,20 @@ namespace PhoAmThucViet.Visual
                 }
                 wv.t.localPosition = new Vector3(pos.x, pos.y, 0);
             }
+        }
+
+        /// <summary>Đầu bếp chính mặc đúng đồ đang trang bị: mũ, tạp dề, dao (tay phải), nồi/chảo (tay trái khi nấu).</summary>
+        private void ApplyHeadChefGear(Chibi chibi)
+        {
+            var s = _game.State;
+            if (chibi == null || s == null || s.equipped == null || s.equipped.Length < 4) return;
+            chibi.SetGear(GearId(s, 3), GearId(s, 2), GearId(s, 0), GearId(s, 1));
+        }
+
+        private string GearId(PhoAmThucViet.Core.GameState s, int slot)
+        {
+            var uid = s.equipped[slot];
+            return string.IsNullOrEmpty(uid) ? null : _game.ItemOf(s.GetEquipment(uid))?.id;
         }
 
         /// <summary>Đĩa món đi theo hai tay nhân vật (sau khi Chibi cập nhật tư thế).</summary>

@@ -75,7 +75,8 @@ namespace PhoAmThucViet.Visual
                     {
                         key = "head", skin = Skins[1], hair = Hairs[1], hairStyle = HairStyle.Short,
                         shirt = White, pants = new Color(0.25f, 0.25f, 0.28f), shoes = Ink,
-                        hat = HatStyle.TallToque, scarf = true, scarfColor = new Color(0.85f, 0.15f, 0.15f),
+                        hat = HatStyle.None, // mũ gắn riêng theo trang bị (Chibi.SetGear / GearLooks.Hat)
+                        scarf = true, scarfColor = new Color(0.85f, 0.15f, 0.15f),
                         mustache = true, buttons = true,
                     };
                 case ChibiKind.Chef:
@@ -134,7 +135,7 @@ namespace PhoAmThucViet.Visual
 
         // ================= Thân, đầu, mặt, mũ =================
 
-        private const float HeadY = 1.42f, HeadR = 0.43f;
+        public const float HeadY = 1.42f, HeadR = 0.43f;
 
         public static Mesh TorsoMesh(ChibiLook l)
         {
