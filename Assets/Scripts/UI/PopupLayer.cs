@@ -137,7 +137,8 @@ namespace PhoAmThucViet.UI
             {
                 _title.text = "Chào mừng trở lại!";
                 _body.text = $"Các quản lý đã kiếm được\n<b>{_game.PendingOffline}</b>\ntrong {Clock(_game.OfflineSeconds)} bạn vắng mặt.";
-                _primary.Set(_game.State.noAds ? "Nhận gấp đôi" : "Xem QC: nhận gấp đôi", true);
+                string mx = $"x{_game.AdOfflineMultiplier:0.#}";
+                _primary.Set(_game.State.noAds ? $"Nhận {mx}" : $"Xem QC: nhận {mx}", true);
                 _secondary.Set("Nhận", true);
                 _secondary.bg.gameObject.SetActive(true);
                 SoundFX.Play(Sfx.Coin);

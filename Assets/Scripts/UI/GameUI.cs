@@ -522,9 +522,10 @@ namespace PhoAmThucViet.UI
             if (ActiveTab == Tab.Shop) { _shopPage.Update(); return; }
 
             int boostLeft = AdsService.Remaining(state, AdsService.Boost);
-            if (_game.BoostSecondsLeft > 0) _boostBtn.Set($"x2 còn {Clock(_game.BoostSecondsLeft)}", false);
-            else if (boostLeft <= 0) _boostBtn.Set("Tăng tốc x2\nhết lượt hôm nay", false);
-            else _boostBtn.Set(state.noAds ? $"Tăng tốc x2\n(còn {boostLeft} lần)" : $"Tăng tốc x2\n(xem QC · {boostLeft})", !AdsService.Busy);
+            string bx = $"x{_game.AdBoostMultiplier:0.#}";
+            if (_game.BoostSecondsLeft > 0) _boostBtn.Set($"x{_game.SpeedMultiplier:0.#} còn {Clock(_game.BoostSecondsLeft)}", false);
+            else if (boostLeft <= 0) _boostBtn.Set($"Tăng tốc {bx}\nhết lượt hôm nay", false);
+            else _boostBtn.Set(state.noAds ? $"Tăng tốc {bx}\n(còn {boostLeft} lần)" : $"Tăng tốc {bx}\n(xem QC · {boostLeft})", !AdsService.Busy);
             UpdateBestSellerHud();
             UpdateProgress(venue);
             UpdateUpgrades(state);
@@ -777,7 +778,7 @@ namespace PhoAmThucViet.UI
         {
             AdsService.ShowRewarded(_game.State, AdsService.Boost, () =>
             {
-                _game.StartBoost();
+                _game.StartBoost(_game.AdBoostSeconds, _game.AdBoostMultiplier); // theo nâng cấp quảng cáo
                 SoundFX.Play(Sfx.Upgrade);
             });
         }

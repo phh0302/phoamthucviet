@@ -121,6 +121,8 @@ namespace PhoAmThucViet.Core
         public float profitBoostSeconds;
         /// <summary>Cấp nâng "Khách hào phóng" (tỉ lệ tip), mua bằng đá quý, giữ qua mọi quán.</summary>
         public int tipLevel;
+        /// <summary>Cấp nâng quảng cáo bằng đá quý: giá trị thưởng / thời lượng tăng tốc. Giữ qua mọi quán.</summary>
+        public int adValueLevel, adDurationLevel;
         /// <summary>Skill "Món best seller": mã quầy đang chạy, lúc hết hiệu ứng, lúc hết hồi chiêu (giờ Unix, giây).</summary>
         public string bestSellerStation = "";
         public long bestSellerEndUnix, bestSellerReadyUnix;

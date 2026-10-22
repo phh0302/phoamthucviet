@@ -19,7 +19,7 @@ namespace PhoAmThucViet.UI
         private class Card { public Image bg; public Text title, desc; public UIButton buy; public string productId; }
         private Card _freeGems, _freeChest, _monthly, _starter, _noAds, _smallChest, _bigChest;
         private Text _smallRates, _bigRates;
-        private Card _profit, _tip;
+        private Card _profit, _tip, _adValue, _adDuration;
         private readonly List<Card> _gemCards = new List<Card>();
         private Text _note;
 
@@ -71,6 +71,10 @@ namespace PhoAmThucViet.UI
             _profit = MakeCard(page, 0, 1, y, 174, new Color(0.18f, 0.50f, 0.25f), OnBuyProfit);
             y += 190;
             _tip = MakeCard(page, 0, 1, y, 174, new Color(0.60f, 0.42f, 0.08f), OnUpgradeTip);
+            y += 190;
+            _adValue = MakeCard(page, 0, 1, y, 174, new Color(0.18f, 0.40f, 0.58f), () => { if (_game.TryUpgradeAdValue()) SoundFX.Play(Sfx.Upgrade); });
+            y += 190;
+            _adDuration = MakeCard(page, 0, 1, y, 174, new Color(0.30f, 0.32f, 0.60f), () => { if (_game.TryUpgradeAdDuration()) SoundFX.Play(Sfx.Upgrade); });
             y += 190;
             _monthly = MakeCard(page, 0, 1, y, 190, new Color(0.62f, 0.45f, 0.12f), OnMonthly);
             y += 206;
@@ -159,7 +163,7 @@ namespace PhoAmThucViet.UI
                 : "quảng cáo và mua hàng giả lập, không trừ tiền thật");
 
             int gemsLeft = AdsService.Remaining(s, AdsService.FreeGems);
-            _freeGems.title.text = $"{AdsService.FreeGemsAmount} ♦ miễn phí";
+            _freeGems.title.text = $"{_game.AdFreeGems} ♦ miễn phí";
             _freeGems.desc.text = $"Xem quảng cáo · còn {gemsLeft}/{AdsService.DailyLimits[AdsService.FreeGems]} lần hôm nay";
             _freeGems.buy.Set(gemsLeft > 0 ? (s.noAds ? "Nhận" : "Xem QC") : "Hết lượt", gemsLeft > 0 && !AdsService.Busy);
             // Thẻ nhỏ: nút nằm dưới
@@ -184,6 +188,18 @@ namespace PhoAmThucViet.UI
                 : $"Tỉ lệ khách để tip: {_game.TipChance * 100:0}% → {_game.NextTipChance * 100:0}%. Tip = {RestaurantController.TipFraction * 100:0}% tiền bữa, chạm đồng xu trên bàn để nhận.";
             _tip.buy.Set(tipMax ? "Tối đa" : $"Nâng\n{_game.TipUpgradePrice} ♦", !tipMax && s.gems >= _game.TipUpgradePrice);
 
+            // Nâng cấp quảng cáo
+            // Nâng vô hạn cấp, giá tăng theo cấp số nhân
+            int vl = _game.AdValueLevel, dl = _game.AdDurationLevel;
+            _adValue.title.text = $"Quảng cáo hậu hĩnh · cấp {vl}";
+            _adValue.desc.text = $"Tăng tốc x{RestaurantController.AdBoostMultiplierAt(vl):0.#} → x{RestaurantController.AdBoostMultiplierAt(vl + 1):0.#} · offline x{RestaurantController.AdBoostMultiplierAt(vl):0.#} → x{RestaurantController.AdBoostMultiplierAt(vl + 1):0.#} · đá quý {RestaurantController.AdFreeGemsAt(vl)} → {RestaurantController.AdFreeGemsAt(vl + 1)} ♦";
+            long vp = RestaurantController.AdUpgradeCost(vl);
+            _adValue.buy.Set($"Nâng\n{vp:N0} ♦", s.gems >= vp);
+            _adDuration.title.text = $"Quảng cáo bền lâu · cấp {dl}";
+            _adDuration.desc.text = $"Thời gian tăng tốc khi xem quảng cáo: {RestaurantController.AdBoostSecondsAt(dl) / 60:0.#} → {RestaurantController.AdBoostSecondsAt(dl + 1) / 60:0.#} phút.";
+            long dp = RestaurantController.AdUpgradeCost(dl);
+            _adDuration.buy.Set($"Nâng\n{dp:N0} ♦", s.gems >= dp);
+
             var monthly = StoreService.Find(StoreService.MonthlyCard);
             _monthly.title.text = s.monthlyCardDays > 0 ? $"Thẻ tháng · còn {s.monthlyCardDays} ngày" : monthly.title;
             _monthly.desc.text = monthly.description;
@@ -207,7 +223,7 @@ namespace PhoAmThucViet.UI
             var s = _game.State;
             AdsService.ShowRewarded(s, AdsService.FreeGems, () =>
             {
-                s.gems += AdsService.FreeGemsAmount;
+                s.gems += _game.AdFreeGems;
                 SoundFX.Play(Sfx.Coin);
             });
         }

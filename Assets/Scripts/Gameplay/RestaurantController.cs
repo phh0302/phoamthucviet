@@ -634,6 +634,49 @@ namespace PhoAmThucViet.Gameplay
         /// <summary>Khách để lại vật phẩm sự kiện ở bàn: (bàn, số vật phẩm, sự kiện).</summary>
         public event Action<TableRun, int, SeasonEvent> OnEventToken;
 
+        // ---------- Nâng cấp quảng cáo (mua bằng đá quý) ----------
+
+        /// <summary>
+        /// Nâng vô hạn cấp; giá tăng theo cấp số nhân: 50 ♦ × 1,25^cấp (làm tròn đẹp).
+        /// Tổng tích lũy mỗi loại: cấp 10 ≈ 1.700 ♦ · cấp 20 ≈ 17.000 ♦ · cấp 30 ≈ 160.000 ♦ · cấp 40 ≈ 1,5 triệu ♦.
+        /// </summary>
+        public static long AdUpgradeCost(int level)
+        {
+            double c = 50 * Math.Pow(1.25, Math.Max(0, level));
+            if (c >= 1e15) return (long)1e15; // chặn tràn số (thực tế không ai tới được)
+            if (c >= 1000) return (long)(Math.Round(c / 50) * 50);
+            if (c >= 100) return (long)(Math.Round(c / 5) * 5);
+            return (long)Math.Round(c);
+        }
+
+        public int AdValueLevel => Mathf.Max(0, State?.adValueLevel ?? 0);
+        public int AdDurationLevel => Mathf.Max(0, State?.adDurationLevel ?? 0);
+
+        /// <summary>"Quảng cáo hậu hĩnh": mỗi cấp tăng tốc +0,1 (từ x2), tiền offline +0,1 (từ x2), đá quý miễn phí +2 (từ 20).</summary>
+        public static float AdBoostMultiplierAt(int level) => 2f + 0.1f * level;
+        public static int AdFreeGemsAt(int level) => 20 + 2 * level;
+        public float AdBoostMultiplier => AdBoostMultiplierAt(AdValueLevel);
+        public double AdOfflineMultiplier => AdBoostMultiplierAt(AdValueLevel);
+        public int AdFreeGems => AdFreeGemsAt(AdValueLevel);
+
+        /// <summary>"Quảng cáo bền lâu": tăng tốc từ 5 phút, mỗi cấp +30 giây.</summary>
+        public static float AdBoostSecondsAt(int level) => 300f + 30f * level;
+        public float AdBoostSeconds => AdBoostSecondsAt(AdDurationLevel);
+
+        public bool TryUpgradeAdValue() => TryUpgradeAd(ref State.adValueLevel, "ad_value");
+        public bool TryUpgradeAdDuration() => TryUpgradeAd(ref State.adDurationLevel, "ad_duration");
+
+        private bool TryUpgradeAd(ref int level, string id)
+        {
+            long price = AdUpgradeCost(level);
+            if (State.gems < price) return false;
+            State.gems -= price;
+            level++;
+            AnalyticsService.Log("gem_spend", ("item", $"{id}_{level}"), ("gems", price));
+            SaveService.Save(State);
+            return true;
+        }
+
         // ---------- Tip ----------
 
         /// <summary>Tỉ lệ tip gốc 6%, mỗi cấp "Khách hào phóng" +2%, tối đa 100% (47 cấp).</summary>
@@ -899,7 +942,7 @@ namespace PhoAmThucViet.Gameplay
 
         public void ClaimOffline(bool doubled)
         {
-            AddMoney(PendingOffline * (doubled ? 2 : 1));
+            AddMoney(PendingOffline * (doubled ? AdOfflineMultiplier : 1));
             PendingOffline = BigNum.Zero;
             OfflineSeconds = 0;
         }
