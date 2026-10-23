@@ -159,6 +159,9 @@ namespace PhoAmThucViet.Visual
             _game.OnHurried += HandleHurried;
             _game.OnVipArrived += HandleVip;
             _game.OnRushStarted += HandleRush;
+            _game.OnEventMilestone += HandleEventMilestone;
+            _game.OnEventRankUp += HandleEventRank;
+            _game.OnFireworks += HandleFireworks;
         }
 
         private void OnDestroy()
@@ -173,6 +176,9 @@ namespace PhoAmThucViet.Visual
                 _game.OnHurried -= HandleHurried;
                 _game.OnVipArrived -= HandleVip;
                 _game.OnRushStarted -= HandleRush;
+                _game.OnEventMilestone -= HandleEventMilestone;
+                _game.OnEventRankUp -= HandleEventRank;
+                _game.OnFireworks -= HandleFireworks;
             }
         }
 
@@ -926,7 +932,8 @@ namespace PhoAmThucViet.Visual
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
             Vector2 world = _cam.ScreenToWorldPoint(new Vector3(screen.x, screen.y, 10));
 
-            // Đồng xu tip trên bàn được ưu tiên (không đổi quầy đang chọn)
+            // Vật phẩm sự kiện (lì xì / đèn lồng / quà) được ưu tiên nhất, rồi tới đồng xu tip
+            if (TryCollectPickup(world)) return;
             if (TryCollectTip(world)) return;
             // Chạm trúng người đang nấu / bưng: hối làm nhanh
             if (TryHurry(world)) return;
@@ -987,6 +994,114 @@ namespace PhoAmThucViet.Visual
             FloatingText.Spawn(_root, at + new Vector2(0, -0.6f), $"Tiền x{RestaurantController.RushProfit:0} · làm nhanh x{RestaurantController.RushSpeed:0.#}",
                 Color.white, 0.3f, 2.4f, 0.25f);
             SoundFX.Play(Sfx.LevelUp, 0.8f);
+        }
+
+        // ================= Quán sự kiện: mốc quà, hạng quán, cơ chế riêng =================
+
+        private void HandleEventMilestone(StationData data, int level, string text)
+        {
+            if (_root == null) return;
+            foreach (var sv in _stations)
+                if (sv.data == data) { FloatingText.Spawn(_root, sv.pos + new Vector2(0, 2.3f), text, new Color(1f, 0.85f, 0.35f), 0.22f, 1.8f, 0.5f); break; }
+            SoundFX.Play(Sfx.Coin, 0.7f);
+        }
+
+        private Vector2 ScreenCenter(float vy = 0.6f) =>
+            _cam == null ? Vector2.zero : (Vector2)_root.InverseTransformPoint(_cam.ViewportToWorldPoint(new Vector3(0.5f, vy, 10)));
+
+        private void HandleEventRank(int rank, string text)
+        {
+            if (_root == null) return;
+            var at = ScreenCenter(0.62f);
+            FloatingText.Spawn(_root, at, $"HẠNG QUÁN {rank}!", Gold, 0.6f, 2.4f, 0.25f);
+            FloatingText.Spawn(_root, at + new Vector2(0, -0.6f), text.Substring(text.IndexOf('!') + 1).Trim(), Color.white, 0.26f, 2.4f, 0.25f);
+            SoundFX.Play(Sfx.LevelUp, 0.8f);
+        }
+
+        private void HandleFireworks()
+        {
+            if (_root == null) return;
+            var at = ScreenCenter(0.62f);
+            FloatingText.Spawn(_root, at, "PHÁO HOA MỪNG LỄ!", new Color(1f, 0.3f, 0.25f), 0.55f, 2.4f, 0.25f);
+            FloatingText.Spawn(_root, at + new Vector2(0, -0.6f), $"Tiền món x3 trong {RestaurantController.FireworksSeconds:0} giây", Gold, 0.28f, 2.4f, 0.25f);
+            Color[] cols = { Gold, new Color(1f, 0.35f, 0.3f), new Color(0.5f, 0.9f, 1f), new Color(0.6f, 1f, 0.5f), new Color(1f, 0.6f, 0.95f) };
+            for (int i = 0; i < 14; i++)
+            {
+                var p = at + new Vector2(UnityEngine.Random.Range(-3.5f, 3.5f), UnityEngine.Random.Range(-0.5f, 2.2f));
+                FloatingText.Spawn(_root, p, "★", cols[i % cols.Length], UnityEngine.Random.Range(0.25f, 0.5f), UnityEngine.Random.Range(1.2f, 2.2f), 0.6f);
+            }
+            SoundFX.Play(Sfx.Chest, 0.8f);
+        }
+
+        private SpriteRenderer _pickup;
+        private RestaurantController.EventMechanic _pickupKind;
+        private int _pickupSerial = -1;
+        private Vector2 _pickupFrom, _pickupTo, _pickupPos;
+        private Vector3 _pickupScale;
+
+        private static string PickupSprite(RestaurantController.EventMechanic m) =>
+            m == RestaurantController.EventMechanic.LiXi ? "props/lixi" : m == RestaurantController.EventMechanic.Lantern ? "props/lantern" : "props/gift";
+
+        private void UpdatePickup()
+        {
+            var m = _game.Mechanic;
+            if (_root == null || !_game.PickupVisible || m == RestaurantController.EventMechanic.None || _tables.Count == 0)
+            {
+                if (_pickup != null) _pickup.gameObject.SetActive(false);
+                return;
+            }
+            if (_pickup == null || _pickupKind != m)
+            {
+                if (_pickup != null) Destroy(_pickup.gameObject);
+                _pickup = SpriteFactory.Picture("EventPickup", _root, Vector2.zero, new Vector2(0.75f, 0.75f), new Color(1f, 0.3f, 0.25f), 20,
+                    PickupSprite(m), out _, circle: true);
+                _pickupScale = _pickup.transform.localScale;
+                _pickupKind = m;
+                _pickupSerial = -1;
+            }
+            if (_pickupSerial != _game.PickupSerial)
+            {
+                _pickupSerial = _game.PickupSerial;
+                float minX = float.MaxValue, maxX = float.MinValue, maxY = float.MinValue;
+                foreach (var tv in _tables) { minX = Mathf.Min(minX, tv.pos.x); maxX = Mathf.Max(maxX, tv.pos.x); maxY = Mathf.Max(maxY, tv.pos.y); }
+                switch (m)
+                {
+                    case RestaurantController.EventMechanic.Lantern: // đèn lồng bay ngang phía trên sảnh
+                        _pickupFrom = new Vector2(minX - 1.2f, maxY + 0.9f);
+                        _pickupTo = new Vector2(maxX + 1.2f, maxY + 1.1f);
+                        break;
+                    case RestaurantController.EventMechanic.Gift: // hộp quà cạnh cửa
+                        _pickupFrom = _pickupTo = _door + new Vector2(UnityEngine.Random.value < 0.5f ? -0.8f : 0.8f, 0.55f);
+                        break;
+                    default: // lì xì rơi cạnh một bàn ngẫu nhiên
+                        var t = _tables[UnityEngine.Random.Range(0, Mathf.Min(_tables.Count, Mathf.Max(1, _game.State.tables)))];
+                        _pickupFrom = _pickupTo = t.pos + new Vector2(UnityEngine.Random.Range(-0.6f, 0.6f), -0.45f);
+                        break;
+                }
+                SoundFX.Play(Sfx.Click, 0.5f);
+            }
+            float life = RestaurantController.PickupLifetime;
+            float k = 1f - _game.PickupSecondsLeft / life;
+            float bob = Mathf.Sin(Time.time * 3f) * 0.08f;
+            _pickupPos = Vector2.Lerp(_pickupFrom, _pickupTo, k) + new Vector2(0, bob);
+            _pickup.gameObject.SetActive(true);
+            _pickup.transform.localPosition = new Vector3(_pickupPos.x, _pickupPos.y, 0);
+            float pulse = 1f + 0.08f * Mathf.Sin(Time.time * 6f);
+            _pickup.transform.localScale = _pickupScale * pulse;
+            // Sắp biến mất thì nhấp nháy
+            _pickup.color = _game.PickupSecondsLeft < 2f && Mathf.Repeat(Time.time * 6f, 1f) < 0.5f ? new Color(1, 1, 1, 0.4f) : Color.white;
+        }
+
+        private bool TryCollectPickup(Vector2 world)
+        {
+            if (_pickup == null || !_pickup.gameObject.activeSelf || !_game.PickupVisible) return false;
+            if ((world - _pickupPos).sqrMagnitude > 0.55f * 0.55f) return false;
+            string text = _game.CollectPickup();
+            if (text == null) return false;
+            FloatingText.Spawn(_root, _pickupPos + new Vector2(0, 0.6f), text, Gold, 0.24f, 1.8f, 0.5f);
+            SoundFX.Play(Sfx.Coin, 0.9f);
+            _pickup.gameObject.SetActive(false);
+            return true;
         }
 
         // ================= Mũi tên hướng dẫn =================
@@ -1380,6 +1495,7 @@ namespace PhoAmThucViet.Visual
         {
             if (_root == null) return;
             UpdateGuide();
+            UpdatePickup();
             foreach (var wv in _workers)
             {
                 if (wv.tag != null && wv.t != null)

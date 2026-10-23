@@ -208,6 +208,7 @@ namespace PhoAmThucViet.Online
                 _ready = true;
                 // Đăng thẻ đầu bếp công khai để người khác mượn (chỉ gửi khi đồ đang mặc thay đổi)
                 await HelperDirectory.Publish(_game.State, _game.equipmentCatalog);
+                await EventBoard.Publish(_game); // điểm sự kiện cho bảng xếp hạng (nếu đang có sự kiện)
                 LastUpload = DateTime.Now;
                 if (userAction) Say("Đã lưu lên mạng.", false);
             }

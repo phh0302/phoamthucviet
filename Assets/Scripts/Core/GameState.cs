@@ -101,6 +101,10 @@ namespace PhoAmThucViet.Core
         /// <summary>Đã gặp khách sộp đầu tiên (xuất hiện sớm để người mới thấy tip).</summary>
         public bool firstVipDone;
 
+        // Quán sự kiện: hạng quán đã đạt và tổng cấp cao nhất (tính điểm xếp hạng), theo mã lần sự kiện
+        public string eventRankKey, eventBestKey;
+        public int eventRank, eventBestLevels;
+
         // Mượn đầu bếp (RestaurantController.Helper): đầu bếp đang giúp, hết giờ lúc nào (unix giây),
         // đã xem quảng cáo kéo dài chưa, số lượt đã mượn trong ngày.
         public HelperCard helper;

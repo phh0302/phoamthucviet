@@ -109,15 +109,42 @@ namespace PhoAmThucViet.Core
         // ---------- Thử nghiệm: bật sự kiện bất kỳ lúc nào ----------
 
         /// <summary>-1 = theo lịch; 0.. = ép sự kiện thứ i trong ForcedChoices (nút "Thử: sự kiện").</summary>
-        public static int DebugForced = -1;
-        private static readonly string[] ForcedChoices = { "tet", "trungthu", "quockhanh", "noel" };
+        /// Trong Unity Editor giá trị được nhớ qua các lần bấm Play (PlayerPrefs "debug_event").
+        public static int DebugForced
+        {
+            get
+            {
+#if UNITY_EDITOR
+                if (!_forcedLoaded) { _forcedLoaded = true; _forced = UnityEngine.PlayerPrefs.GetInt(DebugPrefsKey, -1); }
+#endif
+                return _forced;
+            }
+            set
+            {
+                _forced = value;
+#if UNITY_EDITOR
+                _forcedLoaded = true;
+                UnityEngine.PlayerPrefs.SetInt(DebugPrefsKey, value);
+                UnityEngine.PlayerPrefs.Save();
+#endif
+            }
+        }
+        private static int _forced = -1;
+#pragma warning disable 0414
+        private static bool _forcedLoaded;
+#pragma warning restore 0414
+        public const string DebugPrefsKey = "debug_event";
+        public static readonly string[] ForcedChoices = { "tet", "trungthu", "quockhanh", "noel" };
 
         /// <summary>Đổi lần lượt: theo lịch → Tết → Trung Thu → Quốc khánh → Giáng sinh → theo lịch.</summary>
         public static string CycleDebug()
         {
             DebugForced = DebugForced + 1 >= ForcedChoices.Length ? -1 : DebugForced + 1;
-            return DebugForced < 0 ? "theo lịch" : Find(ForcedChoices[DebugForced])?.name;
+            return DebugLabel;
         }
+
+        /// <summary>Tên sự kiện đang ép thử ("theo lịch" nếu không ép).</summary>
+        public static string DebugLabel => DebugForced < 0 ? "theo lịch" : Find(ForcedChoices[DebugForced])?.name;
 
         private static SeasonEvent Find(string id)
         {

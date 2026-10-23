@@ -34,6 +34,8 @@ namespace PhoAmThucViet.UI
         private Onboarding _onboarding;
         private HelperPanel _helperPanel;
         private UIButton _helperBtn;
+        private LeaderboardPanel _boardPanel;
+        private UIButton _boardBtn;
         private Canvas _canvas;
         private RectTransform _canvasRect;
 
@@ -175,6 +177,10 @@ namespace PhoAmThucViet.UI
             // Nút qua lại quán sự kiện (chỉ hiện khi có sự kiện)
             _eventRunBtn = UIKit.MakeButton("EventRun", layer, "", 22, new Color(0.8f, 0.18f, 0.15f), OnEventRun, UIKit.Pill);
             _eventRunBtn.bg.rectTransform.TopRight(12, debugY, 330, DebugRowHeight - 12);
+            // Bảng xếp hạng sự kiện (cạnh nút quán sự kiện, chỉ hiện khi có sự kiện)
+            _boardBtn = UIKit.MakeButton("Leaderboard", layer, "Xếp hạng", 22, new Color(0.55f, 0.35f, 0.75f), ToggleBoard, UIKit.Pill);
+            _boardBtn.bg.rectTransform.TopRight(352, debugY, 200, DebugRowHeight - 12);
+            _boardBtn.label.color = Palette.Gold;
             _eventRunBtn.label.color = Palette.Gold;
             reset.bg.gameObject.SetActive(DebugTools.Enabled);
 
@@ -211,6 +217,8 @@ namespace PhoAmThucViet.UI
             BuildUpgradePanel(layer);
             _helperPanel = new HelperPanel(_game);
             _helperPanel.Build(layer, TabBarHeight + BottomRowHeight + 20, HudHeight + 6 + StripHeight + 8);
+            _boardPanel = new LeaderboardPanel(_game);
+            _boardPanel.Build(layer, TabBarHeight + BottomRowHeight + 20, HudHeight + 6 + StripHeight + 8);
         }
 
         private void BuildUpgradePanel(RectTransform layer)
@@ -383,10 +391,49 @@ namespace PhoAmThucViet.UI
             }
         }
 
+        private void ToggleBoard()
+        {
+            if (!_boardPanel.IsOpen) { _upgradesOpen = false; _view.ClearSelection(); if (_helperPanel.IsOpen) _helperPanel.Close(); }
+            _boardPanel.Toggle();
+        }
+
         private void ToggleHelper()
         {
-            if (!_helperPanel.IsOpen) { _upgradesOpen = false; _view.ClearSelection(); }
+            if (!_helperPanel.IsOpen) { _upgradesOpen = false; _view.ClearSelection(); if (_boardPanel.IsOpen) _boardPanel.Close(); }
             _helperPanel.Toggle();
+        }
+
+        /// <summary>Dòng trạng thái cơ chế riêng của quán sự kiện (null nếu không có gì để hiện).</summary>
+        private string EventBuffText()
+        {
+            if (!_game.InEventRun) return null;
+            if (_game.FireworksSecondsLeft > 0)
+                return $"<color=#FF8A80>PHÁO HOA · tiền x3 · còn {Mathf.CeilToInt(_game.FireworksSecondsLeft)}s</color>";
+            if (_game.EventSpeedSecondsLeft > 0)
+                return $"<color=#FFD54F>Nấu nhanh x2 · còn {Mathf.CeilToInt(_game.EventSpeedSecondsLeft)}s</color>";
+            switch (_game.Mechanic)
+            {
+                case RestaurantController.EventMechanic.Fireworks:
+                    return $"Niềm tự hào <color=#FF8A80>{Mathf.FloorToInt(_game.Pride * 100)}%</color> · đầy thì bắn pháo hoa";
+                case RestaurantController.EventMechanic.LiXi:
+                    return _game.PickupVisible ? "<color=#FFD54F>Có lì xì rơi! Chạm để nhặt</color>" : "Thỉnh thoảng có lì xì may mắn rơi trong quán";
+                case RestaurantController.EventMechanic.Lantern:
+                    return _game.PickupVisible ? "<color=#FFD54F>Đèn lồng bay qua! Chạm để rước đèn</color>" : "Thỉnh thoảng có đèn lồng bay qua quán";
+                case RestaurantController.EventMechanic.Gift:
+                    return _game.PickupVisible ? "<color=#FFD54F>Có quà ông già Noel ở cửa! Chạm để mở</color>" : "Thỉnh thoảng ông già Noel để quà ở cửa";
+            }
+            return null;
+        }
+
+        /// <summary>Dải tiến độ quán sự kiện: hạng quán và số cấp cần cho hạng kế.</summary>
+        private string EventRankTitle()
+        {
+            int rank = _game.EventRank, total = _game.EventTotalLevels, max = RestaurantController.EventRankLevels.Length;
+            if (rank >= max) return $"Hạng quán {max}/{max} (tối đa) · nâng hết để nhận quà lớn";
+            int need = RestaurantController.EventRankLevels[rank];
+            var r = RestaurantController.EventRankReward(rank);
+            string gift = r.chest > 0 ? $"rương {r.chest} món" : $"{r.gems} ♦";
+            return $"Hạng quán {rank}/{max} · {total}/{need} cấp → {gift}";
         }
 
         private void UpdateHelperButton()
@@ -403,6 +450,7 @@ namespace PhoAmThucViet.UI
             }
             else _helperBtn.Set($"Mượn đầu bếp\n(còn {_game.HelperBorrowsLeft} lượt)", true);
             _helperPanel.Update();
+            _boardPanel.Update();
         }
 
         private void ToggleUpgrades()
@@ -527,7 +575,9 @@ namespace PhoAmThucViet.UI
                 ? $"{_game.CurrentEvent?.name ?? "Sự kiện"} · Quán sự kiện"
                 : $"{_game.City.displayName} · Mốc {_game.VenueNumber}/{_game.VenueCount}" + (_game.Loop > 0 ? $" · Vòng {_game.LoopNumber}" : "");
             UpdateEventButton();
-            _venueText.text = _game.RushActive
+            string eventBuff = EventBuffText();
+            _venueText.text = eventBuff != null ? eventBuff
+                : _game.RushActive
                 ? $"<color=#FFB74D>GIỜ CAO ĐIỂM · tiền x{RestaurantController.RushProfit:0} · còn {Mathf.CeilToInt(_game.RushSecondsLeft)}s</color>"
                 : _game.ProfitBoostSecondsLeft > 0
                 ? $"{venue.displayName} · <color=#7CFC7C>tiền x5 còn {Clock(_game.ProfitBoostSecondsLeft)}</color>"
@@ -566,14 +616,14 @@ namespace PhoAmThucViet.UI
             UpdateUpgrades(state);
             UpdateStationPopup(state, venue);
             UpdateHelperButton();
-            _onboarding?.Update(_view.Selected != null || _upgradesOpen || _helperPanel.IsOpen);
+            _onboarding?.Update(_view.Selected != null || _upgradesOpen || _helperPanel.IsOpen || _boardPanel.IsOpen);
         }
 
         private void UpdateProgress(VenueData venue)
         {
             var p = _game.GetProgress();
             float pct = p.levelsTotal > 0 ? (float)p.levelsDone / p.levelsTotal : 0;
-            string next = _game.InEventRun ? "Nâng hết quán sự kiện → quà lớn"
+            string next = _game.InEventRun ? EventRankTitle()
                 : _game.IsLastVenue
                 ? (_game.City.nextCity != null ? $"Lên xe đi {_game.City.nextCity.displayName}"
                     : $"Xong hành trình → vòng {_game.LoopNumber + 1} (giá +{(RestaurantController.LoopCostFactor(_game.Loop + 1) - 1) * 100:0}%)")
@@ -787,6 +837,7 @@ namespace PhoAmThucViet.UI
             var e = _game.CurrentEvent;
             bool show = e != null || _game.InEventRun;
             _eventRunBtn.bg.gameObject.SetActive(show && ActiveTab == Tab.Restaurant);
+            _boardBtn.bg.gameObject.SetActive(e != null && ActiveTab == Tab.Restaurant);
             if (!show) return;
             if (_game.InEventRun) _eventRunBtn.Set($"◄ Về {_game.City.displayName}", true);
             else if (_game.EventRunCompleted) _eventRunBtn.Set("Quán sự kiện: đã xong ✓", false);

@@ -351,6 +351,7 @@ namespace PhoAmThucViet.Gameplay
             if (_eventCheckTimer <= 0) { _eventCheckTimer = 1f; CheckEventRun(); }
 
             UpdateRush(dt);
+            UpdateEventFun(dt);
             Tick(dt * SpeedMultiplier);
             State.secondsInCity += dt;
             State.secondsInVenue += dt;
@@ -557,6 +558,7 @@ namespace PhoAmThucViet.Gameplay
                     OnEventToken?.Invoke(table, 1, ev);
                 }
                 State.customersServed++;
+                GainPride();
                 QuestService.Track(State, QuestType.ServeCustomers, 1);
                 table.stage = TableStage.Eating;
                 table.timer = EconomyService.EatSeconds;
@@ -572,7 +574,7 @@ namespace PhoAmThucViet.Gameplay
         /// <summary>Giá bán một món ở cấp cho trước, đã tính nâng cấp món.</summary>
         public BigNum DishPrice(StationData data, int level) =>
             EconomyService.ProfitPerDish(data, Venue, level, Bonuses,
-                VenueUpgrades.RecipeMultiplier(State, Venue.stations.IndexOf(data)) * EventProfitMultiplier * ProfitBoostMultiplier * RushProfitMultiplier);
+                VenueUpgrades.RecipeMultiplier(State, Venue.stations.IndexOf(data)) * EventProfitMultiplier * ProfitBoostMultiplier * RushProfitMultiplier * FireworksProfit);
 
         // ---------- Lợi nhuận x5 (mua bằng đá quý) ----------
 
@@ -903,7 +905,9 @@ namespace PhoAmThucViet.Gameplay
             return TrySpend(EconomyService.UpgradeCost(data, Venue, st.level, n, Bonuses), () =>
             {
                 int before = EconomyService.DoublingsReached(data, st.level);
+                int levelBefore = st.level;
                 st.level += n;
+                EventLevelsGained(data, levelBefore, st.level);
                 QuestService.Track(State, QuestType.UpgradeLevels, n);
                 // Mỗi mốc x2 giá món: món lên 1 sao, thưởng 1 đá quý
                 int after = EconomyService.DoublingsReached(data, st.level);

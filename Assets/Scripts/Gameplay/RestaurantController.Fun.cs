@@ -32,7 +32,7 @@ namespace PhoAmThucViet.Gameplay
             return true;
         }
 
-        private float WorkSpeed(Worker w) => (IsHurried(w) ? HurrySpeed : 1f) * (RushActive ? RushSpeed : 1f);
+        private float WorkSpeed(Worker w) => (IsHurried(w) ? HurrySpeed : 1f) * (RushActive ? RushSpeed : 1f) * EventSpeedMultiplier;
 
         // ================= Giờ cao điểm =================
 

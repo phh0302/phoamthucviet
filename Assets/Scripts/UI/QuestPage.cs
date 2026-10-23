@@ -26,7 +26,7 @@ namespace PhoAmThucViet.UI
         private class RewardCell { public Image bg; public Text need, reward; }
         private readonly RewardCell[] _rewardCells = new RewardCell[EventService.Rewards.Length];
         private UIButton _eventClaim, _eventDebug;
-        private string _debugLabel = "theo lịch";
+        private string _debugLabel => EventService.DebugLabel ?? "theo lịch";
 
         public QuestPage(RestaurantController game) => _game = game;
 
@@ -183,7 +183,7 @@ namespace PhoAmThucViet.UI
 
         private void OnDebugEvent()
         {
-            _debugLabel = EventService.CycleDebug() ?? "theo lịch";
+            EventService.CycleDebug();
             SoundFX.Play(Sfx.Click);
         }
 

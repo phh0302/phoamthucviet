@@ -6,12 +6,13 @@ namespace PhoAmThucViet.Core
     /// <summary>
     /// Dựng quán sự kiện (chỉ trong bộ nhớ, không tạo file asset): 5 quầy món theo mùa, quầy lên tới cấp 1000,
     /// 15 mốc x2 giá món (đủ 5 màu sao × 3: xanh lục, lam, vàng, tím, đỏ).
-    /// Mô phỏng (người chơi mua món rẻ nhất, không trang bị): nâng hết mất khoảng 2,5 giờ chơi.
+    /// Mô phỏng (người chơi mua món rẻ nhất, không trang bị): giá tăng 1,7%/cấp → nâng hết khoảng 5,5 giờ chơi
+    /// (bản cũ 1,6%/cấp ≈ 2,4 giờ; rất nhạy: 1,65% ≈ 3,6 giờ, 1,75% ≈ 8,4 giờ).
     /// </summary>
     public static class EventVenueFactory
     {
         public const int MaxLevel = 1000;
-        public const float CostGrowth = 1.016f;
+        public const float CostGrowth = 1.017f;
         public const double DishValue = 0.5;
         public const int Tables = 10;
         public const int CompleteGems = 100;
