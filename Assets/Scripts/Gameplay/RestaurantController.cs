@@ -138,7 +138,8 @@ namespace PhoAmThucViet.Gameplay
             get
             {
                 var b = HelperActive ? HelperChefs.Add(_gearBonuses, HelperBonuses) : _gearBonuses;
-                b.loopCost = InEventRun ? 0 : LoopCostFactor(Loop) - 1;
+                // Vòng chơi làm thành phố chính khó hơn; quán sự kiện thì khó theo đồ Tối thượng của sự kiện khác
+                b.loopCost = InEventRun ? EventDifficulty - 1 : LoopCostFactor(Loop) - 1;
                 return b;
             }
             private set => _gearBonuses = value;

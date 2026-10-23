@@ -44,8 +44,46 @@ namespace PhoAmThucViet.Gameplay
 
         // ================= Hạng quán sự kiện =================
 
-        /// <summary>Tổng cấp các quầy cần cho từng hạng (5 quầy × cấp 1000 = 5000).</summary>
-        public static readonly int[] EventRankLevels = { 25, 75, 150, 250, 400, 600, 850, 1150, 1500, 1900, 2350, 2850, 3400, 4000, 4500, 5000 };
+        /// <summary>Tổng cấp các quầy cần cho từng hạng (8 quầy × cấp 1000 = 8000).</summary>
+        public static readonly int[] EventRankLevels = { 40, 120, 240, 400, 640, 960, 1360, 1840, 2400, 3040, 3760, 4560, 5440, 6400, 7200, 8000 };
+
+        // ================= Độ khó theo đồ Tối thượng =================
+
+        /// <summary>
+        /// Mỗi món Tối thượng (khác nhau) của các sự kiện KHÁC mà người chơi đang có làm mọi giá trong quán sự kiện ×1,6
+        /// (nhân dồn, tối đa ×30). Mô phỏng 8 quầy: đủ 1 bộ Tối thượng cấp 50 mà không có hệ số này nâng hết chỉ ~13 phút;
+        /// thời gian gần như tăng theo đúng hệ số (×6,6 với 4 món ≈ 1,4 giờ; ×30 ≈ 6,5 giờ).
+        /// Đồ Tối thượng của chính sự kiện đang diễn ra không tính.
+        /// </summary>
+        public const double EventDifficultyPerUltimate = 1.6, EventDifficultyMax = 30;
+
+        public static double EventDifficultyFor(int otherUltimates) =>
+            Math.Min(EventDifficultyMax, Math.Pow(EventDifficultyPerUltimate, Math.Max(0, otherUltimates)));
+
+        private int _ultCountFrame = -1, _ultCount;
+        private string _ultCountEvent;
+
+        /// <summary>Số món Tối thượng khác nhau của các sự kiện khác đang có trong kho (tính lại mỗi khung hình nhiều nhất 1 lần).</summary>
+        public int OtherUltimateCount
+        {
+            get
+            {
+                var e = EventService.Current;
+                string current = e?.id ?? "";
+                if (_ultCountFrame == Time.frameCount && _ultCountEvent == current) return _ultCount;
+                _ultCountFrame = Time.frameCount;
+                _ultCountEvent = current;
+                var seen = new System.Collections.Generic.HashSet<string>();
+                if (State?.equipment != null)
+                    foreach (var o in State.equipment)
+                        if (o != null && o.id != null && o.id.StartsWith("ult-") && UltimateItems.EventOf(o.id) != current) seen.Add(o.id);
+                _ultCount = seen.Count;
+                return _ultCount;
+            }
+        }
+
+        /// <summary>Hệ số giá của quán sự kiện (1 khi không ở quán sự kiện).</summary>
+        public double EventDifficulty => InEventRun ? EventDifficultyFor(OtherUltimateCount) : 1;
 
         public event Action<int, string> OnEventRankUp;
 

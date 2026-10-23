@@ -429,11 +429,13 @@ namespace PhoAmThucViet.UI
         private string EventRankTitle()
         {
             int rank = _game.EventRank, total = _game.EventTotalLevels, max = RestaurantController.EventRankLevels.Length;
-            if (rank >= max) return $"Hạng quán {max}/{max} (tối đa) · nâng hết để nhận quà lớn";
+            double diff = _game.EventDifficulty;
+            string hard = diff > 1.001 ? $" · <color=#FF8A80>độ khó x{diff:0.#}</color>" : "";
+            if (rank >= max) return $"Hạng quán {max}/{max} (tối đa) · nâng hết để nhận quà lớn{hard}";
             int need = RestaurantController.EventRankLevels[rank];
             var r = RestaurantController.EventRankReward(rank);
             string gift = r.chest > 0 ? $"rương {r.chest} món" : $"{r.gems} ♦";
-            return $"Hạng quán {rank}/{max} · {total}/{need} cấp → {gift}";
+            return $"Hạng quán {rank}/{max} · {total}/{need} cấp → {gift}{hard}";
         }
 
         private void UpdateHelperButton()

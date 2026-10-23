@@ -1365,6 +1365,167 @@ def _(a):
                                d.rect(116, lt - 26, 134, lt - 10, rgba(H("ffffff")), 4), dots(d, 112, lt, 70, 12, 8, H("5d4037"), 2.4, 1)))
 
 
+
+# ---- Món mới của quán sự kiện (8 món mỗi sự kiện) ----
+@dish("banh-tet")
+def _(a):
+    def c(d):
+        for k, x in enumerate((92, 164)):
+            d.ell(x - 34, 120, x + 34, 196, rgba(H("3e7526")))
+            d.ell(x - 26, 128, x + 26, 188, rgba(H("f3ead2")))
+            d.ell(x - 18, 138, x + 18, 178, rgba(H("e2c06b")))
+            d.ell(x - 9, 148, x + 9, 168, rgba(H("b06b3c")))
+        d.line([(60, 110), (196, 110)], rgba(H("f0e2b6")), 3)
+    plate(a, c)
+
+
+@dish("ga-luoc-la-chanh")
+def _(a):
+    def c(d):
+        d.ell(52, 112, 200, 196, rgba(H("e9b65a")))
+        d.ell(62, 116, 186, 180, rgba(H("f6d27a")))
+        for x in (70, 186):
+            d.line([(x, 160), (x + (-26 if x < 128 else 26), 124)], rgba(H("e9b65a")), 20)
+        r = random.Random(3)
+        for i in range(12):
+            d.line(rot([(-8, 0), (8, 0)], 128 + r.uniform(-50, 50), 150 + r.uniform(-24, 18), r.uniform(0, 180)), rgba(H("4caf50")), 2.5)
+        chili(d, 128, 150, 4, 40, 2)
+        d.circ(212, 190, 14, rgba(H("ffe0b2")))
+        d.circ(212, 190, 10, rgba(H("ffffff")))
+    plate(a, c, cy=164)
+
+
+@dish("nem-chua")
+def _(a):
+    def c(d):
+        for i, (x, y) in enumerate(((80, 150), (124, 140), (168, 150), (100, 176), (148, 178))):
+            d.rect(x - 18, y - 16, x + 18, y + 16, rgba(H("5d9b3a")), 4)
+            d.rect(x - 13, y - 11, x + 13, y + 11, rgba(H("ef9a9a")), 3)
+            dots(d, x, y, 18, 14, 4, H("fff3e0"), 2, i)
+            d.circ(x + 5, y - 4, 3, rgba(H("e53935")))
+        herbs(d, 210, 140, 3, 8, 5)
+    plate(a, c)
+
+
+@dish("banh-pia")
+def _(a):
+    def c(d):
+        d.circ(110, 146, 56, rgba(H("e6c58a")))
+        d.circ(110, 146, 48, rgba(H("f3dcae")))
+        for k in range(3):
+            d.arc(110 - 40 + k * 6, 146 - 40 + k * 6, 110 + 40 - k * 6, 146 + 40 - k * 6, 200, 340, rgba(H("e2c89a")), 2)
+        d.circ(110, 140, 8, rgba(H("e53935")))
+        d.poly([(150, 176), (210, 160), (214, 196), (160, 206)], rgba(H("e6c58a")))
+        d.poly([(156, 180), (206, 168), (208, 192), (164, 200)], rgba(H("c9a24a")))
+        d.circ(186, 186, 9, rgba(H("ffb300")))
+    plate(a, c)
+
+
+@dish("che-troi-nuoc")
+def _(a):
+    def c(d):
+        for (x, y) in ((96, 108), (130, 102), (162, 110), (114, 118), (148, 120)):
+            d.circ(x, y, 15, rgba(H("fff8ee")))
+            d.circ(x - 4, y - 5, 5, rgba(H("ffffff")))
+        dots(d, 128, 110, 140, 30, 18, H("fff3c4"), 2.2, 3)  # mè
+        d.line(curve((70, 120), (128, 96), (186, 122)), rgba(H("fffdf5")), 5)
+        d.line([(84, 98), (100, 92)], rgba(H("f3c46b")), 3)  # gừng
+    bowl(a, H("b8752f"), c, body=H("fffaf0"), band=H("8d4f2a"))
+
+
+@dish("buoi-nam-roi")
+def _(a):
+    def c(d):
+        d.ell(54, 108, 154, 200, rgba(H("9ccc65")))
+        d.ell(62, 112, 146, 190, rgba(H("aed581")))
+        d.circ(104, 112, 6, rgba(H("6d4c41")))
+        leaf(d, 118, 104, 30, -30, H("43a047"))
+        for k in range(4):
+            x = 150 + k * 18
+            d.poly([(x, 196), (x + 14, 140), (x + 28, 196)], rgba(H("f8bbd0")))
+            d.poly([(x + 4, 192), (x + 14, 152), (x + 24, 192)], rgba(H("f48fb1")))
+    plate(a, c)
+
+
+@dish("xoi-xeo")
+def _(a):
+    def c(d):
+        d.poly([(48, 170)] + curve((48, 170), (64, 96), (128, 92)) + curve((128, 92), (192, 96), (208, 170)), rgba(H("f6c544")))
+        rice_grains(d, 128, 140, 150, 70, 4, H("f2b631"))
+        d.ell(80, 104, 176, 140, rgba(H("ffe082")))  # đậu xanh
+        dots(d, 128, 112, 90, 26, 18, H("8d5a2b"), 3.2, 6)  # hành phi
+    leaf_plate(a, c, cy=168)
+
+
+@dish("banh-cuon")
+def _(a):
+    def c(d):
+        for k in range(4):
+            y = 128 + k * 16
+            d.ell(46, y - 12, 176, y + 12, rgba(H("f6f3ec")))
+            d.ell(52, y - 9, 170, y + 4, rgba(H("ffffff")))
+        dots(d, 110, 150, 100, 50, 22, H("8d5a2b"), 3, 2)  # hành phi
+        for (x, y) in ((190, 136), (204, 160)):
+            d.ell(x - 18, y - 9, x + 18, y + 9, rgba(H("f2e1c5")))  # chả lụa
+        herbs(d, 196, 186, 3, 8, 3)
+    plate(a, c)
+
+
+@dish("che-ba-mau")
+def _(a):
+    glass(a, None, top=48, fill=0.9, layers=[(0, H("fdfaf2")), (0.22, H("66bb6a")), (0.48, H("ffd54f")), (0.72, H("c62828"))], ice_n=3,
+          straw=H("ffca28"))
+
+
+@dish("banh-khuc-cay")
+def _(a):
+    def c(d):
+        d.rect(44, 122, 196, 182, rgba(H("6d4c41")), 26)
+        for k in range(5):
+            d.line([(60 + k * 26, 128), (70 + k * 26, 176)], rgba(H("5d4037")), 3)
+        d.ell(176, 120, 216, 184, rgba(H("8d6e63")))
+        d.arc(182, 128, 210, 176, 0, 360, rgba(H("fff3e0")), 3)
+        d.arc(190, 138, 202, 166, 0, 360, rgba(H("fff3e0")), 2)
+        dots(d, 120, 124, 120, 6, 10, H("ffffff"), 4, 3)  # đường bột
+        leaf(d, 92, 118, 22, -20, H("2e7d32"))
+        d.circ(104, 116, 6, rgba(H("e53935")))
+        d.circ(112, 120, 6, rgba(H("e53935")))
+    plate(a, c)
+
+
+@dish("keo-gay")
+def _(a):
+    def cane(d, x, ang):
+        pts = [(x, 210), (x, 90)] + [(x + 22 - 22 * math.cos(math.radians(t)), 90 - 22 * math.sin(math.radians(t))) for t in range(0, 181, 15)]
+        pts = rot([(px - x, py - 150) for px, py in pts], x, 150, ang)
+        d.line(pts, rgba(H("fafafa")), 16)
+        for k in range(len(pts) - 1):
+            if k % 2 == 0:
+                d.line([pts[k], pts[k + 1]], rgba(H("e53935")), 16)
+    def c(d):
+        cane(d, 96, -12)
+        cane(d, 150, 10)
+        d.ell(110, 186, 150, 204, rgba(H("2e7d32")))
+        d.circ(130, 192, 7, rgba(H("e53935")))
+    a.draw(c)
+    a.piece(lambda d, f: d.ell(-10, -10, -5, -5, f), H("ffffff"), shade=0, light=0, edge=False)
+
+
+@dish("banh-tao")
+def _(a):
+    def c(d):
+        d.ell(42, 108, 214, 196, rgba(H("d9913a")))
+        d.ell(52, 114, 204, 188, rgba(H("efb75a")))
+        for k in range(6):
+            x = 66 + k * 24
+            d.line([(x, 120), (x + 18, 184)], rgba(H("d9913a")), 6)
+        for k in range(4):
+            y = 128 + k * 18
+            d.line([(54, y), (202, y)], rgba(H("d9913a")), 5)
+        d.circ(186, 108, 14, rgba(H("e53935")))
+        leaf(d, 196, 96, 16, -40, H("43a047"))
+    plate(a, c, cy=158)
+
 ORDER = list(R.keys())
 
 if __name__ == "__main__":
