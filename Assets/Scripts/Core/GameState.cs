@@ -101,6 +101,14 @@ namespace PhoAmThucViet.Core
         /// <summary>Đã gặp khách sộp đầu tiên (xuất hiện sớm để người mới thấy tip).</summary>
         public bool firstVipDone;
 
+        // Mượn đầu bếp (RestaurantController.Helper): đầu bếp đang giúp, hết giờ lúc nào (unix giây),
+        // đã xem quảng cáo kéo dài chưa, số lượt đã mượn trong ngày.
+        public HelperCard helper;
+        public long helperEndUnix;
+        public bool helperExtended;
+        public string helperDay;
+        public int helperBorrowsToday;
+
         // Đầu bếp chính: kho trang bị, uid món đang dùng ở 4 ô (Dao, Nồi, Tạp dề, Mũ),
         // và số mảnh của từng vị trí (mảnh dao, mảnh nồi, mảnh tạp dề, mảnh mũ).
         public List<OwnedEquipment> equipment = new List<OwnedEquipment>();

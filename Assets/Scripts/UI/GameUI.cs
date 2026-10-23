@@ -32,6 +32,8 @@ namespace PhoAmThucViet.UI
         private RestaurantController _game;
         private RestaurantView _view;
         private Onboarding _onboarding;
+        private HelperPanel _helperPanel;
+        private UIButton _helperBtn;
         private Canvas _canvas;
         private RectTransform _canvasRect;
 
@@ -202,8 +204,13 @@ namespace PhoAmThucViet.UI
             // Mục tiêu tân thủ + gợi ý (dựng trước popup quầy và bảng nâng cấp để nằm dưới, không che chúng)
             _onboarding = new Onboarding(_game, _view, layer, _upgradesBtn.bg.rectTransform,
                 HudHeight + 6 + StripHeight + DebugRowHeight + 4, TabBarHeight + BottomRowHeight + 16);
+            // Nút mượn đầu bếp (góc phải, ngang thẻ mục tiêu)
+            _helperBtn = UIKit.MakeButton("Helper", layer, "", 22, new Color(0.13f, 0.52f, 0.47f), ToggleHelper, UIKit.Pill);
+            _helperBtn.bg.rectTransform.TopRight(12, HudHeight + 6 + StripHeight + DebugRowHeight + 4, 300, 88);
             BuildStationPopup(layer);
             BuildUpgradePanel(layer);
+            _helperPanel = new HelperPanel(_game);
+            _helperPanel.Build(layer, TabBarHeight + BottomRowHeight + 20, HudHeight + 6 + StripHeight + 8);
         }
 
         private void BuildUpgradePanel(RectTransform layer)
@@ -376,10 +383,32 @@ namespace PhoAmThucViet.UI
             }
         }
 
+        private void ToggleHelper()
+        {
+            if (!_helperPanel.IsOpen) { _upgradesOpen = false; _view.ClearSelection(); }
+            _helperPanel.Toggle();
+        }
+
+        private void UpdateHelperButton()
+        {
+            if (_game.HelperActive)
+            {
+                int s = Mathf.CeilToInt(_game.HelperSecondsLeft);
+                _helperBtn.Set($"{_game.ActiveHelper.name}\nđang giúp · {s / 60}:{s % 60:00}", true);
+            }
+            else if (_game.HelperCooldownLeft > 0)
+            {
+                int s = Mathf.CeilToInt(_game.HelperCooldownLeft);
+                _helperBtn.Set($"Mượn đầu bếp\nchờ {s / 60}:{s % 60:00}", true);
+            }
+            else _helperBtn.Set($"Mượn đầu bếp\n(còn {_game.HelperBorrowsLeft} lượt)", true);
+            _helperPanel.Update();
+        }
+
         private void ToggleUpgrades()
         {
             _upgradesOpen = !_upgradesOpen;
-            if (_upgradesOpen) _view.ClearSelection();
+            if (_upgradesOpen) { _view.ClearSelection(); if (_helperPanel.IsOpen) _helperPanel.Close(); }
             SoundFX.Play(Sfx.Click);
         }
 
@@ -536,7 +565,8 @@ namespace PhoAmThucViet.UI
             UpdateProgress(venue);
             UpdateUpgrades(state);
             UpdateStationPopup(state, venue);
-            _onboarding?.Update(_view.Selected != null || _upgradesOpen);
+            UpdateHelperButton();
+            _onboarding?.Update(_view.Selected != null || _upgradesOpen || _helperPanel.IsOpen);
         }
 
         private void UpdateProgress(VenueData venue)
@@ -586,6 +616,7 @@ namespace PhoAmThucViet.UI
             var data = _view != null ? _view.Selected : null;
             if (data != null && !venue.stations.Contains(data)) data = null;
             Vector2 topPx = default, bottomPx = default;
+            if (data != null && _helperPanel.IsOpen) _helperPanel.Close(); // chạm quầy thì đóng bảng mượn đầu bếp
             bool show = data != null && !_upgradesOpen && !_game.IsVenueComplete() && _view.TryGetStationScreenRect(data, out topPx, out bottomPx);
             p.root.gameObject.SetActive(show);
             if (!show) { p.shownFor = null; return; }

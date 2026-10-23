@@ -108,6 +108,7 @@ namespace PhoAmThucViet.Visual
             public Chibi chibi;
             public SpriteRenderer plate;
             public SpriteRenderer glow; // vòng sáng dưới chân khi đang bị hối
+            public TextMesh tag;        // tên đầu bếp mượn trên đầu
             public int taskId;
             public Vector2 startPos;
         }
@@ -1263,6 +1264,7 @@ namespace PhoAmThucViet.Visual
                     if (wv.t != null) Destroy(wv.t.gameObject);
                     if (wv.plate != null) Destroy(wv.plate.gameObject);
                     if (wv.glow != null) Destroy(wv.glow.gameObject);
+                    if (wv.tag != null) Destroy(wv.tag.gameObject);
                 }
                 _workers.Clear();
             }
@@ -1277,7 +1279,7 @@ namespace PhoAmThucViet.Visual
         private WorkerView CreateWorker(RestaurantController.Worker data, Vector2 at)
         {
             var kind = data.kind == RestaurantController.WorkerKind.Waiter ? ChibiKind.Waiter
-                     : data.kind == RestaurantController.WorkerKind.HeadChef ? ChibiKind.HeadChef
+                     : data.kind == RestaurantController.WorkerKind.HeadChef || data.kind == RestaurantController.WorkerKind.Helper ? ChibiKind.HeadChef
                      : ChibiKind.Chef;
             var chibi = Chibi.Create(_root, kind, data.index, at);
             // Khay trên tay khi bưng món (vẽ đè lên nhân vật, vị trí theo hai tay)
@@ -1285,7 +1287,13 @@ namespace PhoAmThucViet.Visual
             plate.gameObject.SetActive(false);
             var glow = SpriteFactory.Block("HurryGlow", _root, at, new Vector2(0.9f, 0.36f), new Color(1f, 0.82f, 0.25f, 0.55f), 4, circle: true);
             glow.gameObject.SetActive(false);
-            return new WorkerView { data = data, t = chibi.transform, chibi = chibi, plate = plate, glow = glow };
+            TextMesh tag = null;
+            if (data.kind == RestaurantController.WorkerKind.Helper)
+            {
+                string name = _game.State.helper?.name ?? "Đầu bếp mượn";
+                tag = SpriteFactory.Text("HelperTag", _root, at + new Vector2(0, 1.35f), name, 0.17f, new Color(0.55f, 1f, 0.85f), 12);
+            }
+            return new WorkerView { data = data, t = chibi.transform, chibi = chibi, plate = plate, glow = glow, tag = tag };
         }
 
         /// <summary>Chỗ đứng khi rảnh: đầu bếp đứng bên phải dãy quầy, phục vụ bên trái.</summary>
@@ -1294,6 +1302,7 @@ namespace PhoAmThucViet.Visual
             switch (w.kind)
             {
                 case RestaurantController.WorkerKind.HeadChef: return _chefHome;
+                case RestaurantController.WorkerKind.Helper: return _chefHome + new Vector2(-0.3f, -0.55f);
                 case RestaurantController.WorkerKind.Chef: return _chefHome + new Vector2(-(w.index % 6 + 1) * 0.45f, -(w.index / 6) * 0.5f);
                 default: return _waiterHome + new Vector2((w.index % 6) * 0.5f, -(w.index / 6) * 0.5f);
             }
@@ -1308,6 +1317,7 @@ namespace PhoAmThucViet.Visual
             {
                 var w = wv.data;
                 if (w.kind == RestaurantController.WorkerKind.HeadChef) ApplyHeadChefGear(wv.chibi);
+                else if (w.kind == RestaurantController.WorkerKind.Helper) ApplyHelperGear(wv.chibi);
                 if (w.task == RestaurantController.TaskKind.Idle)
                 {
                     wv.taskId = 0;
@@ -1351,6 +1361,14 @@ namespace PhoAmThucViet.Visual
             chibi.SetGear(GearId(s, 3), GearId(s, 2), GearId(s, 0), GearId(s, 1));
         }
 
+        /// <summary>Đầu bếp mượn mặc đúng 4 món của người cho mượn.</summary>
+        private void ApplyHelperGear(Chibi chibi)
+        {
+            var card = _game.State.helper;
+            if (chibi == null || card == null) return;
+            chibi.SetGear(card.ItemAt(3), card.ItemAt(2), card.ItemAt(0), card.ItemAt(1));
+        }
+
         private string GearId(PhoAmThucViet.Core.GameState s, int slot)
         {
             var uid = s.equipped[slot];
@@ -1364,6 +1382,8 @@ namespace PhoAmThucViet.Visual
             UpdateGuide();
             foreach (var wv in _workers)
             {
+                if (wv.tag != null && wv.t != null)
+                    wv.tag.transform.localPosition = (Vector2)wv.t.localPosition + new Vector2(0, 1.35f);
                 if (wv.glow != null && wv.t != null)
                 {
                     bool hurried = RestaurantController.IsHurried(wv.data);

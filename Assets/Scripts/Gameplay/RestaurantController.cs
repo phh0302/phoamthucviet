@@ -137,7 +137,7 @@ namespace PhoAmThucViet.Gameplay
         {
             get
             {
-                var b = _gearBonuses;
+                var b = HelperActive ? HelperChefs.Add(_gearBonuses, HelperBonuses) : _gearBonuses;
                 b.loopCost = InEventRun ? 0 : LoopCostFactor(Loop) - 1;
                 return b;
             }
@@ -191,7 +191,7 @@ namespace PhoAmThucViet.Gameplay
             public bool vip;
         }
 
-        public enum WorkerKind { HeadChef, Chef, Waiter }
+        public enum WorkerKind { HeadChef, Chef, Waiter, Helper }
         public enum TaskKind { Idle, Cook, Deliver }
 
         /// <summary>Một người làm: đầu bếp chính (vừa nấu vừa bưng), đầu bếp thuê (nấu mọi món), phục vụ (chỉ bưng).</summary>
@@ -421,6 +421,8 @@ namespace PhoAmThucViet.Gameplay
                 if (w.task == TaskKind.Idle && _readyTrays.Count > 0) StartDeliver(w);
             foreach (var w in _chefs)
                 if (w.task == TaskKind.Idle && _cookQueue.Count > 0) StartCook(w);
+            // Đầu bếp mượn: chỉ nhận việc mới khi còn giờ
+            if (_helper != null && HelperActive && _helper.task == TaskKind.Idle && _cookQueue.Count > 0) StartCook(_helper);
             if (_headChef.task == TaskKind.Idle)
             {
                 bool waiterFree = false;
@@ -437,6 +439,9 @@ namespace PhoAmThucViet.Gameplay
             if (_headChef == null) { _headChef = new Worker { kind = WorkerKind.HeadChef }; changed = true; }
             while (_chefs.Count < State.chefs) { _chefs.Add(new Worker { kind = WorkerKind.Chef, index = _chefs.Count }); changed = true; }
             while (_waiters.Count < State.waiters) { _waiters.Add(new Worker { kind = WorkerKind.Waiter, index = _waiters.Count }); changed = true; }
+            // Đầu bếp mượn: vào khi còn giờ; hết giờ thì làm nốt món đang nấu rồi mới về
+            if (HelperActive && _helper == null) { _helper = new Worker { kind = WorkerKind.Helper }; changed = true; }
+            else if (!HelperActive && _helper != null && _helper.task == TaskKind.Idle) { _helper = null; changed = true; }
             while (_tables.Count < Mathf.Max(1, State.tables))
                 _tables.Add(new TableRun { index = _tables.Count, stage = TableStage.Arriving, timer = EconomyService.CustomerArriveSeconds });
             if (!changed) return;
@@ -444,6 +449,7 @@ namespace PhoAmThucViet.Gameplay
             _allWorkers.Add(_headChef);
             _allWorkers.AddRange(_chefs);
             _allWorkers.AddRange(_waiters);
+            if (_helper != null) _allWorkers.Add(_helper);
         }
 
         /// <summary>Xóa toàn bộ khách và việc đang làm (khi mở game, lên đời, xóa save).</summary>
@@ -452,6 +458,7 @@ namespace PhoAmThucViet.Gameplay
             _tables.Clear(); _chefs.Clear(); _waiters.Clear(); _allWorkers.Clear();
             _cookQueue.Clear(); _readyTrays.Clear();
             _headChef = null;
+            _helper = null;
             if (State != null) foreach (var st in State.stations) st.ready = 0;
         }
 
