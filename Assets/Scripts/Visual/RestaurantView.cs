@@ -107,6 +107,7 @@ namespace PhoAmThucViet.Visual
             public Transform t;
             public Chibi chibi;
             public SpriteRenderer plate;
+            public SpriteRenderer glow; // vòng sáng dưới chân khi đang bị hối
             public int taskId;
             public Vector2 startPos;
         }
@@ -154,6 +155,9 @@ namespace PhoAmThucViet.Visual
             _game.OnDishStarUp += HandleStarUp;
             _game.OnPerfectDish += HandlePerfectDish;
             _game.OnTipLeft += HandleTipLeft;
+            _game.OnHurried += HandleHurried;
+            _game.OnVipArrived += HandleVip;
+            _game.OnRushStarted += HandleRush;
         }
 
         private void OnDestroy()
@@ -165,6 +169,9 @@ namespace PhoAmThucViet.Visual
                 _game.OnDishStarUp -= HandleStarUp;
                 _game.OnPerfectDish -= HandlePerfectDish;
                 _game.OnTipLeft -= HandleTipLeft;
+                _game.OnHurried -= HandleHurried;
+                _game.OnVipArrived -= HandleVip;
+                _game.OnRushStarted -= HandleRush;
             }
         }
 
@@ -920,6 +927,8 @@ namespace PhoAmThucViet.Visual
 
             // Đồng xu tip trên bàn được ưu tiên (không đổi quầy đang chọn)
             if (TryCollectTip(world)) return;
+            // Chạm trúng người đang nấu / bưng: hối làm nhanh
+            if (TryHurry(world)) return;
 
             foreach (var sv in _stations)
             {
@@ -930,6 +939,137 @@ namespace PhoAmThucViet.Visual
                 return;
             }
             Selected = null; // chạm ra chỗ trống thì bỏ chọn
+        }
+
+        private bool TryHurry(Vector2 world)
+        {
+            WorkerView best = null;
+            float bestD = float.MaxValue;
+            foreach (var wv in _workers)
+            {
+                if (wv.t == null || wv.data.task == RestaurantController.TaskKind.Idle) continue;
+                Vector2 p = wv.t.localPosition;
+                float dx = world.x - p.x, dy = world.y - p.y;
+                if (Mathf.Abs(dx) > 0.38f || dy < -0.1f || dy > 1.15f) continue; // thân nhân vật cao ~1,1
+                float d = dx * dx + (dy - 0.5f) * (dy - 0.5f);
+                if (d < bestD) { bestD = d; best = wv; }
+            }
+            return best != null && _game.Hurry(best.data);
+        }
+
+        private void HandleHurried(RestaurantController.Worker w)
+        {
+            if (_root == null) return;
+            foreach (var wv in _workers)
+            {
+                if (wv.data != w || wv.t == null) continue;
+                string[] lines = { "Nhanh lên!", "Hăng hái!", "Tăng tốc!", "Lẹ tay nào!" };
+                FloatingText.Spawn(_root, (Vector2)wv.t.localPosition + new Vector2(0, 1.25f), lines[_game.HurryCount % lines.Length],
+                    new Color(1f, 0.85f, 0.3f), 0.26f);
+                SoundFX.Play(Sfx.Click, 0.6f);
+                break;
+            }
+        }
+
+        private void HandleVip(RestaurantController.TableRun table)
+        {
+            if (_root == null || table.index >= _tables.Count) return;
+            FloatingText.Spawn(_root, _tables[table.index].pos + new Vector2(0, 1.5f), "Khách sộp tới!", Gold, 0.3f, 1.8f, 0.5f);
+            SoundFX.Play(Sfx.Coin, 0.6f);
+        }
+
+        private void HandleRush()
+        {
+            if (_root == null || _cam == null) return;
+            Vector2 at = _root.InverseTransformPoint(_cam.ViewportToWorldPoint(new Vector3(0.5f, 0.6f, 10)));
+            FloatingText.Spawn(_root, at, "GIỜ CAO ĐIỂM!", new Color(1f, 0.55f, 0.15f), 0.6f, 2.4f, 0.25f);
+            FloatingText.Spawn(_root, at + new Vector2(0, -0.6f), $"Tiền x{RestaurantController.RushProfit:0} · làm nhanh x{RestaurantController.RushSpeed:0.#}",
+                Color.white, 0.3f, 2.4f, 0.25f);
+            SoundFX.Play(Sfx.LevelUp, 0.8f);
+        }
+
+        // ================= Mũi tên hướng dẫn =================
+
+        public enum GuideTarget { None, Station, HeadChef, Tip }
+        private GuideTarget _guide;
+        private int _guideIndex;
+        private SpriteRenderer _guideArrow;
+        private static Sprite _arrowSprite;
+
+        /// <summary>Hướng dẫn tân thủ: mũi tên vàng nhấp nhô chỉ vào quầy / đầu bếp chính / đồng xu tip.</summary>
+        public void SetGuide(GuideTarget target, int index = 0) { _guide = target; _guideIndex = index; }
+
+        /// <summary>Có đồng xu tip nào đang chờ nhặt trên bàn không.</summary>
+        public bool HasTipWaiting
+        {
+            get
+            {
+                var runs = _game.Tables;
+                for (int i = 0; i < runs.Count && i < _tables.Count; i++) if (!runs[i].tip.IsZero) return true;
+                return false;
+            }
+        }
+
+        public static Sprite ArrowSprite()
+        {
+            if (_arrowSprite != null) return _arrowSprite;
+            const int S = 64;
+            var tex = new Texture2D(S, S, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+            var px = new Color32[S * S];
+            var ink = new Color32(92, 69, 61, 255);
+            var gold = new Color32(255, 205, 60, 255);
+            for (int y = 0; y < S; y++)
+            for (int x = 0; x < S; x++)
+            {
+                // Mũi tên chĩa xuống: thân chữ nhật phía trên + tam giác phía dưới, viền nâu
+                float cx = Mathf.Abs(x - S / 2f + 0.5f);
+                bool head = y < 34 && cx < (y + 2) * 0.9f;
+                bool shaft = y >= 30 && y < 60 && cx < 11;
+                bool headIn = y < 31 && y > 4 && cx < (y - 3) * 0.9f - 3;
+                bool shaftIn = y >= 28 && y < 56 && cx < 7;
+                px[y * S + x] = (headIn || shaftIn) ? gold : (head || shaft) ? ink : new Color32(0, 0, 0, 0);
+            }
+            tex.SetPixels32(px);
+            tex.Apply();
+            _arrowSprite = Sprite.Create(tex, new Rect(0, 0, S, S), new Vector2(0.5f, 0f), 100);
+            return _arrowSprite;
+        }
+
+        private void UpdateGuide()
+        {
+            Vector2? at = null;
+            switch (_guide)
+            {
+                case GuideTarget.Station:
+                    if (_guideIndex >= 0 && _guideIndex < _stations.Count) at = _stations[_guideIndex].pos + new Vector2(0, 0.55f);
+                    break;
+                case GuideTarget.HeadChef:
+                    foreach (var wv in _workers)
+                        if (wv.data.kind == RestaurantController.WorkerKind.HeadChef && wv.t != null) { at = (Vector2)wv.t.localPosition + new Vector2(0, 1.25f); break; }
+                    break;
+                case GuideTarget.Tip:
+                    var runs = _game.Tables;
+                    for (int i = 0; i < runs.Count && i < _tables.Count; i++)
+                        if (!runs[i].tip.IsZero) { at = CoinPos(_tables[i]) + new Vector2(0, 0.25f); break; }
+                    break;
+            }
+            if (at == null || _root == null)
+            {
+                if (_guideArrow != null) _guideArrow.gameObject.SetActive(false);
+                return;
+            }
+            if (_guideArrow == null)
+            {
+                var go = new GameObject("GuideArrow");
+                go.transform.SetParent(_root, false);
+                _guideArrow = go.AddComponent<SpriteRenderer>();
+                SpriteFactory.SetSprite(_guideArrow, ArrowSprite());
+                _guideArrow.sortingOrder = 40;
+                go.transform.localScale = Vector3.one * 0.85f;
+            }
+            _guideArrow.gameObject.SetActive(true);
+            float bob = Mathf.Abs(Mathf.Sin(Time.time * 4f)) * 0.22f;
+            _guideArrow.transform.localPosition = new Vector3(at.Value.x, at.Value.y + bob, 0);
         }
 
         private void OnStationTapped(StationView sv)
@@ -1000,9 +1140,10 @@ namespace PhoAmThucViet.Visual
                     SetAction(tv.customer, run.stage == RestaurantController.TableStage.Eating ? ChibiAction.Eat : ChibiAction.Sit);
                 }
 
-                tv.bubble.text = run.stage == RestaurantController.TableStage.Ordered ? $"{run.cooked}/{run.order.Count} món"
-                               : run.stage == RestaurantController.TableStage.Ready ? "Chờ bưng!"
-                               : "";
+                string vip = run.vip ? "★ Khách sộp\n" : "";
+                tv.bubble.text = run.stage == RestaurantController.TableStage.Ordered ? $"{vip}{run.cooked}/{run.order.Count} món"
+                               : run.stage == RestaurantController.TableStage.Ready ? $"{vip}Chờ bưng!"
+                               : run.vip ? "★ Khách sộp" : "";
                 tv.lastStage = run.stage;
             }
         }
@@ -1121,6 +1262,7 @@ namespace PhoAmThucViet.Visual
                 {
                     if (wv.t != null) Destroy(wv.t.gameObject);
                     if (wv.plate != null) Destroy(wv.plate.gameObject);
+                    if (wv.glow != null) Destroy(wv.glow.gameObject);
                 }
                 _workers.Clear();
             }
@@ -1141,7 +1283,9 @@ namespace PhoAmThucViet.Visual
             // Khay trên tay khi bưng món (vẽ đè lên nhân vật, vị trí theo hai tay)
             var plate = SpriteFactory.Picture("Plate", _root, at, new Vector2(0.34f, 0.34f), Color.white, 8, "props/plate", out _, circle: true);
             plate.gameObject.SetActive(false);
-            return new WorkerView { data = data, t = chibi.transform, chibi = chibi, plate = plate };
+            var glow = SpriteFactory.Block("HurryGlow", _root, at, new Vector2(0.9f, 0.36f), new Color(1f, 0.82f, 0.25f, 0.55f), 4, circle: true);
+            glow.gameObject.SetActive(false);
+            return new WorkerView { data = data, t = chibi.transform, chibi = chibi, plate = plate, glow = glow };
         }
 
         /// <summary>Chỗ đứng khi rảnh: đầu bếp đứng bên phải dãy quầy, phục vụ bên trái.</summary>
@@ -1217,8 +1361,20 @@ namespace PhoAmThucViet.Visual
         private void LateUpdate()
         {
             if (_root == null) return;
+            UpdateGuide();
             foreach (var wv in _workers)
             {
+                if (wv.glow != null && wv.t != null)
+                {
+                    bool hurried = RestaurantController.IsHurried(wv.data);
+                    if (wv.glow.gameObject.activeSelf != hurried) wv.glow.gameObject.SetActive(hurried);
+                    if (hurried)
+                    {
+                        wv.glow.transform.localPosition = (Vector2)wv.t.localPosition + new Vector2(0, 0.02f);
+                        float k = 1f + 0.15f * Mathf.Sin(Time.time * 18f);
+                        wv.glow.transform.localScale = new Vector3(0.9f * k, 0.36f * k, 1);
+                    }
+                }
                 if (wv.plate == null || wv.chibi == null || !wv.plate.gameObject.activeSelf) continue;
                 Vector3 hand = _root.InverseTransformPoint(wv.chibi.CarryPoint);
                 wv.plate.transform.localPosition = new Vector3(hand.x, hand.y, 0);

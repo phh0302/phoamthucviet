@@ -11,7 +11,7 @@ namespace PhoAmThucViet.Gameplay
     /// trang bị đầu bếp chính, lưu game và thu nhập offline.
     /// Không phụ thuộc giao diện; UI chỉ đọc và gọi hàm.
     /// </summary>
-    public class RestaurantController : MonoBehaviour
+    public partial class RestaurantController : MonoBehaviour
     {
         [Tooltip("Thành phố bắt đầu (thường là Hà Nội).")]
         public CityData startCity;
@@ -187,6 +187,8 @@ namespace PhoAmThucViet.Gameplay
             public BigNum lastTotal;
             /// <summary>Tip đang nằm trên bàn chờ người chơi chạm nhận (cộng dồn nếu chưa nhận).</summary>
             public BigNum tip;
+            /// <summary>Khách sộp: chắc chắn để lại tip rất to.</summary>
+            public bool vip;
         }
 
         public enum WorkerKind { HeadChef, Chef, Waiter }
@@ -202,6 +204,8 @@ namespace PhoAmThucViet.Gameplay
             public StationData station; // món đang nấu
             public TableRun table;      // bàn đang nấu cho / đang bưng tới
             public float elapsed, duration;
+            /// <summary>Người chơi chạm để hối: làm nhanh hơn tới thời điểm này (Time.time).</summary>
+            public float hurryUntil;
             public float Progress => duration > 0 ? Mathf.Clamp01(elapsed / duration) : 1f;
         }
 
@@ -346,6 +350,7 @@ namespace PhoAmThucViet.Gameplay
             _eventCheckTimer -= dt;
             if (_eventCheckTimer <= 0) { _eventCheckTimer = 1f; CheckEventRun(); }
 
+            UpdateRush(dt);
             Tick(dt * SpeedMultiplier);
             State.secondsInCity += dt;
             State.secondsInVenue += dt;
@@ -391,12 +396,13 @@ namespace PhoAmThucViet.Gameplay
                     if (t.timer <= 0)
                     {
                         // Khách đứng dậy: có tỉ lệ để lại tip trên bàn (giá trị theo bữa ăn → tăng theo cấp quầy)
-                        if (!t.lastTotal.IsZero && _rng.NextDouble() < TipChance)
+                        if (!t.lastTotal.IsZero && (t.vip || _rng.NextDouble() < TipChance))
                         {
-                            var add = t.lastTotal * TipFraction;
+                            var add = t.lastTotal * (t.vip ? VipTipMultiplier : TipFraction);
                             t.tip += add;
                             OnTipLeft?.Invoke(t, add);
                         }
+                        t.vip = false;
                         t.stage = TableStage.Arriving;
                         t.timer = EconomyService.CustomerArriveSeconds;
                     }
@@ -406,7 +412,7 @@ namespace PhoAmThucViet.Gameplay
             foreach (var w in _allWorkers)
             {
                 if (w.task == TaskKind.Idle) continue;
-                w.elapsed += dt;
+                w.elapsed += dt * WorkSpeed(w);
                 if (w.elapsed >= w.duration) FinishTask(w);
             }
 
@@ -460,6 +466,8 @@ namespace PhoAmThucViet.Gameplay
                     if (IsUnlocked(data)) t.order.Add(data);
             if (t.order.Count == 0) { t.timer = 1f; return; }
             t.stage = TableStage.Ordered;
+            t.vip = RollVip();
+            if (t.vip) OnVipArrived?.Invoke(t);
             t.cooked = 0;
             t.perfect.Clear();
             foreach (var dish in t.order) _cookQueue.Add((t, dish));
@@ -557,7 +565,7 @@ namespace PhoAmThucViet.Gameplay
         /// <summary>Giá bán một món ở cấp cho trước, đã tính nâng cấp món.</summary>
         public BigNum DishPrice(StationData data, int level) =>
             EconomyService.ProfitPerDish(data, Venue, level, Bonuses,
-                VenueUpgrades.RecipeMultiplier(State, Venue.stations.IndexOf(data)) * EventProfitMultiplier * ProfitBoostMultiplier);
+                VenueUpgrades.RecipeMultiplier(State, Venue.stations.IndexOf(data)) * EventProfitMultiplier * ProfitBoostMultiplier * RushProfitMultiplier);
 
         // ---------- Lợi nhuận x5 (mua bằng đá quý) ----------
 
@@ -752,6 +760,7 @@ namespace PhoAmThucViet.Gameplay
             if (t.tip.IsZero) return BigNum.Zero;
             var amount = t.tip;
             t.tip = BigNum.Zero;
+            TipsCollected++;
             AddMoney(amount);
             return amount;
         }

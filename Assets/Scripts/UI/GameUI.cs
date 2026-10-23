@@ -31,6 +31,7 @@ namespace PhoAmThucViet.UI
 
         private RestaurantController _game;
         private RestaurantView _view;
+        private Onboarding _onboarding;
         private Canvas _canvas;
         private RectTransform _canvasRect;
 
@@ -198,6 +199,9 @@ namespace PhoAmThucViet.UI
             lu.sizeDelta = new Vector2(760, 130);
             _levelUpBtn.label.color = Palette.Gold;
 
+            // Mục tiêu tân thủ + gợi ý (dựng trước popup quầy và bảng nâng cấp để nằm dưới, không che chúng)
+            _onboarding = new Onboarding(_game, _view, layer, _upgradesBtn.bg.rectTransform,
+                HudHeight + 6 + StripHeight + DebugRowHeight + 4, TabBarHeight + BottomRowHeight + 16);
             BuildStationPopup(layer);
             BuildUpgradePanel(layer);
         }
@@ -494,7 +498,9 @@ namespace PhoAmThucViet.UI
                 ? $"{_game.CurrentEvent?.name ?? "Sự kiện"} · Quán sự kiện"
                 : $"{_game.City.displayName} · Mốc {_game.VenueNumber}/{_game.VenueCount}" + (_game.Loop > 0 ? $" · Vòng {_game.LoopNumber}" : "");
             UpdateEventButton();
-            _venueText.text = _game.ProfitBoostSecondsLeft > 0
+            _venueText.text = _game.RushActive
+                ? $"<color=#FFB74D>GIỜ CAO ĐIỂM · tiền x{RestaurantController.RushProfit:0} · còn {Mathf.CeilToInt(_game.RushSecondsLeft)}s</color>"
+                : _game.ProfitBoostSecondsLeft > 0
                 ? $"{venue.displayName} · <color=#7CFC7C>tiền x5 còn {Clock(_game.ProfitBoostSecondsLeft)}</color>"
                 : venue.displayName;
             _moneyText.text = state.money.ToString();
@@ -530,6 +536,7 @@ namespace PhoAmThucViet.UI
             UpdateProgress(venue);
             UpdateUpgrades(state);
             UpdateStationPopup(state, venue);
+            _onboarding?.Update(_view.Selected != null || _upgradesOpen);
         }
 
         private void UpdateProgress(VenueData venue)
